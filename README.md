@@ -28,14 +28,15 @@ The output DLL goes to `bin/Debug/HideoutCraftModifier/HideoutCraftModifier.dll`
 
 ## Installation
 
-Copy the built `HideoutCraftModifier` folder into your SPT server's `Mods/` directory:
+Extract the release zip into your SPT server's mods directory:
 
 ```
-SPT Server/
-  Mods/
-    HideoutCraftModifier/
-      HideoutCraftModifier.dll
-      config.json
+SPT_Runtime/
+  user/
+    mods/
+      HideoutCraftModifier/
+        HideoutCraftModifier.dll
+        config.json
 ```
 
 ## Usage
