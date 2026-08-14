@@ -1,0 +1,10 @@
+bin/
+obj/
+.vs/
+.idea/
+/packages/
+/_ReSharper.Caches/
+riderModule.iml
+*.user
+*.suo
+*.DotSettings.user

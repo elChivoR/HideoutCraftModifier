@@ -1,0 +1,26 @@
+<HeadContent>
+    <link href="/HideoutCraftModifier/css/hcm.css" rel="stylesheet" />
+</HeadContent>
+
+<div class="hcm-page spt-page">
+    <MudContainer MaxWidth="MaxWidth.False" Class="hcm-container pa-4">
+        <MudPaper Elevation="0" Class="hcm-header spt-panel pa-4 mb-4">
+            <div class="d-flex align-center gap-3">
+                <MudIcon Icon="@Icons.Material.Filled.Build" Size="Size.Large" Color="Color.Warning" />
+                <div>
+                    <MudText Typo="Typo.h5" Class="spt-title">Hideout Craft Modifier</MudText>
+                    <MudText Typo="Typo.body2" Class="mud-text-secondary">Add, edit, or remove hideout crafting recipes</MudText>
+                </div>
+            </div>
+        </MudPaper>
+
+        <div class="hcm-content">
+            @ChildContent
+        </div>
+    </MudContainer>
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public RenderFragment? ChildContent { get; set; }
+}

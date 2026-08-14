@@ -1,0 +1,84 @@
+.hcm-page {
+    min-height: 100vh;
+}
+
+.hcm-container {
+    max-width: 1600px;
+    margin: 0 auto;
+}
+
+.hcm-header {
+    border-left: 3px solid var(--mud-palette-warning);
+}
+
+/* Split panel layout */
+.hcm-split {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+}
+
+.hcm-list-panel {
+    width: 420px;
+    min-width: 420px;
+    max-height: calc(100vh - 160px);
+    display: flex;
+    flex-direction: column;
+    position: sticky;
+    top: 16px;
+}
+
+.hcm-detail-panel {
+    flex: 1;
+    min-width: 0;
+}
+
+/* Recipe list */
+.hcm-recipe-list {
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
+}
+
+.hcm-recipe-item {
+    padding: 12px 16px;
+    cursor: pointer;
+    border-left: 3px solid transparent;
+    transition: background-color 0.15s, border-color 0.15s;
+}
+
+.hcm-recipe-item:hover {
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.hcm-recipe-selected {
+    background: rgba(var(--mud-palette-primary-rgb), 0.15) !important;
+    border-left-color: var(--mud-palette-primary);
+}
+
+.hcm-list-icon {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.05);
+    flex-shrink: 0;
+}
+
+/* Requirements fieldset */
+.hcm-fieldset {
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 4px;
+    padding: 16px;
+}
+
+.hcm-fieldset legend {
+    padding: 0 8px;
+}
+
+/* Text truncation helper */
+.text-truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}

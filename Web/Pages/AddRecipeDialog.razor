@@ -1,0 +1,79 @@
+@inject RecipeService RecipeService
+
+<MudDialog>
+    <DialogContent>
+        <MudSelect @bind-Value="_areaType"
+                   Label="Station"
+                   Variant="Variant.Outlined"
+                   Margin="Margin.Dense"
+                   Class="mb-3">
+            @foreach (var area in _areas)
+            {
+                <MudSelectItem Value="@area">@area</MudSelectItem>
+            }
+        </MudSelect>
+
+        <MudTextField @bind-Value="_endProduct"
+                      Label="Output item"
+                      Variant="Variant.Outlined"
+                      Margin="Margin.Dense"
+                      Placeholder="Search item..." />
+
+        @if (!string.IsNullOrWhiteSpace(_endProduct) && _endProduct.Length == 24)
+        {
+            <div class="d-flex align-center gap-1 mt-2">
+                <img src="@($"https://assets.tarkov.dev/{_endProduct}-icon.webp")" alt="" style="width:24px;height:24px;object-fit:contain;border-radius:2px;background:rgba(255,255,255,0.05);" />
+                <MudText Typo="Typo.caption" Class="mud-text-secondary">@RecipeService.ResolveItemName(_endProduct)</MudText>
+            </div>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Submit">Create craft</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = null!;
+
+    private string _areaType = "Workbench";
+    private string _endProduct = "";
+
+    private static readonly List<string> _areas =
+    [
+        "Vents", "Security", "WaterCloset", "Stash", "Generator", "Heating",
+        "WaterCollector", "MedStation", "Kitchen", "RestSpace", "Workbench",
+        "IntelligenceCenter", "ShootingRange", "Library", "ScavCase",
+        "Illumination", "AirFilteringUnit", "SolarPower", "BoozeGenerator",
+        "BitcoinFarm", "Gym", "WeaponStand", "CircleOfCultists"
+    ];
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private void Submit()
+    {
+        if (string.IsNullOrWhiteSpace(_endProduct) || _endProduct.Length != 24)
+            return;
+
+        var addition = new RecipeAddition
+        {
+            AreaType = _areaType,
+            EndProduct = _endProduct,
+            ProductionTime = 60,
+            Count = 1,
+            Requirements =
+            [
+                new RequirementConfig
+                {
+                    Type = "Area",
+                    AreaType = (int)Enum.Parse<SPTarkov.Server.Core.Models.Enums.Hideout.HideoutAreas>(_areaType),
+                    RequiredLevel = 1
+                }
+            ]
+        };
+
+        var recipeId = RecipeService.AddRecipe(addition);
+        MudDialog.Close(DialogResult.Ok(recipeId));
+    }
+}
