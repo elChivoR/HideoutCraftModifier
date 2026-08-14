@@ -3,6 +3,11 @@ using SPTarkov.Server.Web;
 
 namespace HideoutCraftModifier;
 
+/// <summary>
+/// Mod identity and web UI registration. IModBlazorMetadata tells SPT's built-in
+/// Blazor server to mount this mod's pages and static assets (wwwroot).
+/// HomePage = "/hcm" adds a link in SPT's mod dashboard.
+/// </summary>
 public record ModMetadata : IModMetadata, IModBlazorMetadata
 {
     public string ModGuid { get; init; } = "com.elchivor.hideoutcraftmodifier";

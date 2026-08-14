@@ -2,6 +2,11 @@ using System.Text.Json.Serialization;
 
 namespace HideoutCraftModifier.Models;
 
+/// <summary>
+/// Root config persisted to config.json. Tracks three types of user changes:
+/// modifications (edits to existing recipes), additions (new recipes),
+/// and removals (IDs of deleted original recipes).
+/// </summary>
 public record ModConfig
 {
     [JsonPropertyName("modifications")]
@@ -14,6 +19,9 @@ public record ModConfig
     public List<string> Removals { get; set; } = [];
 }
 
+/// <summary>
+/// Partial update for an existing recipe. Nullable fields mean "don't change".
+/// </summary>
 public record RecipeModification
 {
     [JsonPropertyName("recipeId")]
@@ -65,6 +73,15 @@ public record RecipeAddition
     public List<RequirementConfig> Requirements { get; set; } = [];
 }
 
+/// <summary>
+/// Represents a single requirement for a recipe. The Type field determines
+/// which other fields are relevant:
+///   - "Item": TemplateId + Count
+///   - "Tool": TemplateId + IsFunctional
+///   - "Area": AreaType (int enum) + RequiredLevel
+///   - "QuestComplete": QuestId
+///   - "Resource": TemplateId + Resource (amount)
+/// </summary>
 public record RequirementConfig
 {
     [JsonPropertyName("type")]

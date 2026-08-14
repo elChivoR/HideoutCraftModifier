@@ -12,6 +12,12 @@ using SPTarkov.Server.Core.Utils;
 
 namespace HideoutCraftModifier.Services;
 
+/// <summary>
+/// Core service that manages CRUD operations on hideout crafting recipes.
+/// Operates directly on SPT's in-memory HideoutTable so changes take effect
+/// immediately without a server restart. Persists user changes to config.json
+/// so they survive restarts.
+/// </summary>
 [Injectable(InjectionType.Singleton)]
 public class RecipeService(
     ISptLogger<RecipeService> logger,
@@ -22,21 +28,33 @@ public class RecipeService(
 {
     private ModConfig _config = new();
     private string _modPath = "";
+    // Cached to avoid calling localeService.GetLocaleDb("en") on every item name resolution,
+    // which was causing ~500ms delays when rendering the full recipe table.
     private Dictionary<string, string>? _localeCache;
 
     public ModConfig Config => _config;
 
+    /// <summary>
+    /// Loads config.json, caches English locale DB, and applies saved modifications
+    /// to SPT's in-memory recipe list. Called once during server startup.
+    /// </summary>
     public void Initialize()
     {
         _modPath = modHelper.GetAbsolutePathToModFolder(Assembly.GetExecutingAssembly());
         _config = modHelper.GetJsonDataFromFile<ModConfig>(_modPath, "config.json") ?? new ModConfig();
+        // Force English locale regardless of user's SPT language setting
         _localeCache = localeService.GetLocaleDb("en");
         ApplyConfig();
     }
 
+    /// <summary>
+    /// Resolves a template ID to a human-readable item name using SPT's locale database.
+    /// Falls back to the raw template ID if no translation is found.
+    /// </summary>
     public string ResolveItemName(string templateId)
     {
         _localeCache ??= localeService.GetLocaleDb("en");
+        // SPT locale keys follow the pattern "{templateId} Name"
         return _localeCache.TryGetValue($"{templateId} Name", out var name) ? name : templateId;
     }
 
@@ -55,11 +73,16 @@ public class RecipeService(
         return ToViewModel(recipe, _config.Additions.Any(a => IsAddedRecipe(recipe, a)));
     }
 
+    /// <summary>
+    /// Modifies an existing recipe in memory and persists the change to config.json.
+    /// Only non-null fields in the modification are applied (partial update).
+    /// </summary>
     public void ModifyRecipe(string recipeId, RecipeModification mod)
     {
         var recipe = FindRecipe(recipeId);
         if (recipe is null) return;
 
+        // Apply only the fields that were explicitly set (nullable pattern for partial updates)
         if (mod.ProductionTime.HasValue) recipe.ProductionTime = mod.ProductionTime.Value;
         if (mod.Count.HasValue) recipe.Count = mod.Count.Value;
         if (mod.ProductionLimitCount.HasValue) recipe.ProductionLimitCount = mod.ProductionLimitCount.Value;
@@ -80,8 +103,13 @@ public class RecipeService(
         SaveConfig();
     }
 
+    /// <summary>
+    /// Creates a new recipe, injects it into SPT's in-memory table, and persists it.
+    /// Returns the generated MongoId so the UI can select the new recipe.
+    /// </summary>
     public string AddRecipe(RecipeAddition addition)
     {
+        // MongoId() with no args generates a unique ID (SPT's equivalent of ObjectId)
         var recipe = new HideoutProduction
         {
             Id = new MongoId(),
@@ -106,6 +134,11 @@ public class RecipeService(
         return recipe.Id;
     }
 
+    /// <summary>
+    /// Removes a recipe from memory. If it was user-added, removes from additions.
+    /// If it was an original SPT recipe, tracks the ID in removals so it stays
+    /// removed on next server start.
+    /// </summary>
     public bool RemoveRecipe(string recipeId)
     {
         var recipes = hideoutTable.Production.Recipes;
@@ -117,6 +150,8 @@ public class RecipeService(
         var endProductId = (string)recipe.EndProduct;
         recipes.Remove(recipe);
 
+        // If this was a user-added recipe, just remove it from additions.
+        // Otherwise, track the original recipe ID in removals for persistence.
         var addedRecipe = _config.Additions.FirstOrDefault(a => a.EndProduct == endProductId);
         if (addedRecipe is not null)
         {
@@ -137,6 +172,10 @@ public class RecipeService(
         return true;
     }
 
+    /// <summary>
+    /// Applies saved config to SPT's in-memory recipe list on startup.
+    /// Order matters: removals first, then modifications, then additions.
+    /// </summary>
     private void ApplyConfig()
     {
         var recipes = hideoutTable.Production.Recipes;
@@ -197,6 +236,9 @@ public class RecipeService(
             logger.Success($"[HCM] Applied config: {addedCount} added, {modifiedCount} modified, {removedCount} removed");
     }
 
+    /// <summary>
+    /// Persists config to disk on a background thread to avoid blocking the UI.
+    /// </summary>
     private void SaveConfig()
     {
         var configPath = Path.Combine(_modPath, "config.json");
@@ -248,6 +290,11 @@ public class RecipeService(
                && recipe.AreaType?.ToString() == addition.AreaType;
     }
 
+    /// <summary>
+    /// Maps a config requirement to SPT's Requirement model.
+    /// MongoId requires explicit null casting because its parameterless constructor
+    /// generates a new ID instead of representing null.
+    /// </summary>
     private static Requirement ToRequirement(RequirementConfig config)
     {
         return new Requirement
