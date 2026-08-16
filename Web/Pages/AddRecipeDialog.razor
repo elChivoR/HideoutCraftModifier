@@ -22,7 +22,7 @@
         @if (!string.IsNullOrWhiteSpace(_endProduct) && _endProduct.Length == 24)
         {
             <div class="d-flex align-center gap-1 mt-2">
-                <img src="@($"https://assets.tarkov.dev/{_endProduct}-icon.webp")" alt="" style="width:24px;height:24px;object-fit:contain;border-radius:2px;background:rgba(255,255,255,0.05);" />
+                <img src="@($"/hcm/api/icon/{_endProduct}")" alt="" style="width:24px;height:24px;object-fit:contain;border-radius:2px;background:rgba(255,255,255,0.05);" />
                 <MudText Typo="Typo.caption" Class="mud-text-secondary">@RecipeService.ResolveItemName(_endProduct)</MudText>
             </div>
         }
