@@ -10,7 +10,8 @@ SPT 4.1.2 server mod that lets you manage hideout crafting recipes through a web
 - **Remove recipes** — with confirmation dialog
 - **Live changes** — modifications apply immediately to SPT's in-memory data, no server restart needed
 - **Persistent config** — all changes are saved to `config.json` and reapplied on server start
-- **Item icons** — loaded from [tarkov.dev](https://tarkov.dev) CDN for visual reference
+- **Item search** — autocomplete search by item name when editing requirements
+- **Item icons** — cached in-memory from [tarkov.dev](https://tarkov.dev) CDN (one request per item, served locally after)
 - **English item names** — resolved from SPT's locale database
 
 ## Requirements
@@ -24,11 +25,11 @@ SPT 4.1.2 server mod that lets you manage hideout crafting recipes through a web
 dotnet build HideoutCraftModifier.csproj
 ```
 
-The output DLL goes to `bin/Debug/HideoutCraftModifier/HideoutCraftModifier.dll`.
+A ready-to-distribute zip is generated automatically at `bin/{Configuration}/HideoutCraftModifier.zip` with the correct folder structure for SPT.
 
 ## Installation
 
-Extract the release zip into your SPT server's mods directory:
+Extract the release zip into your SPT root directory:
 
 ```
 SPT_Runtime/
@@ -36,8 +37,12 @@ SPT_Runtime/
     mods/
       HideoutCraftModifier/
         HideoutCraftModifier.dll
-        config.json
+        wwwroot/
+          css/
+            hcm.css
 ```
+
+`config.json` is generated automatically on first run — it stores your recipe changes and is preserved across updates.
 
 ## Usage
 
@@ -58,11 +63,14 @@ HideoutCraftModifier/
 │   ├── ModConfig.cs           # Config serialization models for persistence
 │   └── RecipeViewModel.cs     # View models for the Blazor UI
 ├── Services/
-│   └── RecipeService.cs       # Core service — CRUD on in-memory recipes + config persistence
+│   ├── RecipeService.cs       # Core service — CRUD on in-memory recipes + config persistence
+│   └── IconCacheService.cs    # In-memory icon cache (downloads from tarkov.dev CDN once per item)
 ├── Web/
 │   ├── _imports.razor         # Blazor using directives
 │   ├── Layouts/
 │   │   └── HcmLayout.razor    # Page layout with header
+│   ├── Controllers/
+│   │   └── IconController.cs  # API endpoint serving cached item icons (/hcm/api/icon/{id})
 │   └── Pages/
 │       ├── Home.razor         # Main split-panel UI (recipe list + inline editor)
 │       ├── AddRecipeDialog.razor   # Minimal dialog for new recipe (station + output item)
@@ -102,10 +110,7 @@ Each recipe requirement has a `type` that determines its behavior:
 
 ### Item Icons
 
-Icons are loaded from the tarkov.dev CDN using the pattern:
-```
-https://assets.tarkov.dev/{templateId}-icon.webp
-```
+Icons are fetched from the tarkov.dev CDN on first request and cached in-memory by `IconCacheService`. Subsequent requests are served locally via `/hcm/api/icon/{templateId}` without hitting the CDN again.
 
 ### NuGet Packages
 
