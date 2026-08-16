@@ -183,12 +183,25 @@
                             @if (req.Type is "Item" or "Tool")
                             {
                                 <div class="d-flex align-center gap-2">
+                                    
+                                    @if (!string.IsNullOrWhiteSpace(req.TemplateId) && req.TemplateId.Length == 24)
+                                    {
+                                        <div class="d-flex align-center gap-1">
+                                            <img src="@IconUrl(req.TemplateId)" alt="" style="width:40px;height:40px;object-fit:contain;border-radius:2px;background:rgba(255,255,255,0.05);" />
+                                            @* <MudText Typo="Typo.caption" Class="mud-text-secondary">@RecipeService.ResolveItemName(req.TemplateId)</MudText> *@
+                                        </div>
+                                    }
+                                    
                                     <MudAutocomplete T="ItemSearchResult"
                                                      Placeholder="Search item..."
                                                      SearchFunc="@((q, _) => SearchItems(q))"
                                                      ToStringFunc="@(r => r?.Name ?? "")"
                                                      Value="req.SelectedItem"
-                                                     ValueChanged="@(r => { req.SelectedItem = r; req.TemplateId = r?.TemplateId; })"
+                                                     ValueChanged="@(r =>
+                                                                   {
+                                                                       req.SelectedItem = r;
+                                                                       req.TemplateId = r?.TemplateId;
+                                                                   })"
                                                      Variant="Variant.Outlined"
                                                      Margin="Margin.Dense"
                                                      Style="flex:1;"
@@ -197,7 +210,7 @@
                                                      MaxItems="15"
                                                      ResetValueOnEmptyText="true"
                                                      CoerceText="true"
-                                                     Dense="true" />
+                                                     Dense="true"/>
                                     @if (req.Type == "Item")
                                     {
                                         <MudNumericField @bind-Value="req.Count"
@@ -205,20 +218,20 @@
                                                          Min="1"
                                                          Variant="Variant.Outlined"
                                                          Margin="Margin.Dense"
-                                                         Style="max-width:75px;" />
+                                                         Style="max-width:75px;"/>
                                     }
                                     @if (req.Type == "Tool")
                                     {
-                                        <MudCheckBox @bind-Value="req.IsFunctional" Label="Functional" Dense="true" Color="Color.Primary" Style="margin-bottom:0;" />
+                                        <MudCheckBox @bind-Value="req.IsFunctional" Label="Functional" Dense="true" Color="Color.Primary" Style="margin-bottom:0;"/>
                                     }
                                 </div>
-                                @if (!string.IsNullOrWhiteSpace(req.TemplateId) && req.TemplateId.Length == 24)
+                                @*@if (!string.IsNullOrWhiteSpace(req.TemplateId) && req.TemplateId.Length == 24)
                                 {
                                     <div class="d-flex align-center gap-1 mt-1">
                                         <img src="@IconUrl(req.TemplateId)" alt="" style="width:20px;height:20px;object-fit:contain;border-radius:2px;background:rgba(255,255,255,0.05);" />
                                         <MudText Typo="Typo.caption" Class="mud-text-secondary">@RecipeService.ResolveItemName(req.TemplateId)</MudText>
                                     </div>
-                                }
+                                }*@
                             }
                             else if (req.Type == "Area")
                             {
