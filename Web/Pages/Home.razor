@@ -100,25 +100,31 @@
                     <div class="hcm-section mb-3">
                         <MudText Typo="Typo.overline" Class="mud-text-secondary mb-2">PRODUCTION</MudText>
                         <div class="d-flex gap-3 align-center">
-                            <MudNumericField @bind-Value="_editProductionTime"
-                                             Label="Time (seconds)"
-                                             Min="0.0"
-                                             Variant="Variant.Outlined"
-                                             Margin="Margin.Dense"
-                                             Style="flex:1;" />
+                            <MudTooltip Text="Total crafting duration in seconds" Arrow="true" Placement="Placement.Top">
+                                <MudNumericField @bind-Value="_editProductionTime"
+                                                 Label="Time (seconds)"
+                                                 Min="0.0"
+                                                 Variant="Variant.Outlined"
+                                                 Margin="Margin.Dense"
+                                                 Style="flex:1;" />
+                            </MudTooltip>
                             <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Default" Style="height:24px;">@FormatTime(_editProductionTime)</MudChip>
-                            <MudNumericField @bind-Value="_editCount"
-                                             Label="Count"
-                                             Min="1"
-                                             Variant="Variant.Outlined"
-                                             Margin="Margin.Dense"
-                                             Style="max-width:90px;" />
-                            <MudNumericField @bind-Value="_editProductionLimitCount"
-                                             Label="Limit (0 = unlimited)"
-                                             Min="0"
-                                             Variant="Variant.Outlined"
-                                             Margin="Margin.Dense"
-                                             Style="max-width:150px;" />
+                            <MudTooltip Text="Number of items produced per craft" Arrow="true" Placement="Placement.Top">
+                                <MudNumericField @bind-Value="_editCount"
+                                                 Label="Count"
+                                                 Min="1"
+                                                 Variant="Variant.Outlined"
+                                                 Margin="Margin.Dense"
+                                                 Style="max-width:90px;" />
+                            </MudTooltip>
+                            <MudTooltip Text="Max times this recipe can be crafted. 0 = unlimited" Arrow="true" Placement="Placement.Top">
+                                <MudNumericField @bind-Value="_editProductionLimitCount"
+                                                 Label="Limit (0 = unlimited)"
+                                                 Min="0"
+                                                 Variant="Variant.Outlined"
+                                                 Margin="Margin.Dense"
+                                                 Style="max-width:150px;" />
+                            </MudTooltip>
                         </div>
                     </div>
 
