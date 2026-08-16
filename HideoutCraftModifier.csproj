@@ -19,7 +19,10 @@
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
     </ItemGroup>
-    <ItemGroup>
-        <Folder Include="wwwroot\" />
-    </ItemGroup>
+    <Target Name="CopyWwwroot" AfterTargets="Build">
+        <ItemGroup>
+            <WwwrootFiles Include="wwwroot\**\*" />
+        </ItemGroup>
+        <Copy SourceFiles="@(WwwrootFiles)" DestinationFiles="@(WwwrootFiles->'$(OutputPath)wwwroot\%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
+    </Target>
 </Project>

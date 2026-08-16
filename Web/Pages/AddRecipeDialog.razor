@@ -13,11 +13,18 @@
             }
         </MudSelect>
 
-        <MudTextField @bind-Value="_endProduct"
-                      Label="Output item"
-                      Variant="Variant.Outlined"
-                      Margin="Margin.Dense"
-                      Placeholder="Search item..." />
+        <MudAutocomplete T="ItemSearchResult"
+                         Label="Output item"
+                         Placeholder="Search item..."
+                         SearchFunc="@((q, _) => SearchItems(q))"
+                         ToStringFunc="@(r => r?.Name ?? "")"
+                         ValueChanged="@(r => { if (r is not null) _endProduct = r.TemplateId; })"
+                         Variant="Variant.Outlined"
+                         Margin="Margin.Dense"
+                         MinCharacters="2"
+                         DebounceInterval="300"
+                         MaxItems="15"
+                         Dense="true" />
 
         @if (!string.IsNullOrWhiteSpace(_endProduct) && _endProduct.Length == 24)
         {
@@ -48,6 +55,12 @@
         "Illumination", "AirFilteringUnit", "SolarPower", "BoozeGenerator",
         "BitcoinFarm", "Gym", "WeaponStand", "CircleOfCultists"
     ];
+
+    private Task<IEnumerable<ItemSearchResult>> SearchItems(string query)
+    {
+        var results = RecipeService.SearchItems(query);
+        return Task.FromResult<IEnumerable<ItemSearchResult>>(results);
+    }
 
     private void Cancel() => MudDialog.Cancel();
 

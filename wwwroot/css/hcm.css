@@ -82,3 +82,21 @@
     text-overflow: ellipsis;
     white-space: nowrap;
 }
+
+/* Section cards */
+.hcm-section {
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 6px;
+    padding: 14px 16px;
+}
+
+/* Standardize width for all MudBlazor inputs in flex rows */
+.hcm-section .d-flex > .mud-autocomplete,
+.hcm-section .d-flex > .mud-input-control {
+    min-width: 0;
+}
+
+/* Normalize margin-top on MudSelect and MudNumericField so they align */
+.mud-input-control.mud-input-control-margin-dense {
+    margin-top: 4px !important;
+}

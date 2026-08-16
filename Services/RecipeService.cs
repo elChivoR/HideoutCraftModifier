@@ -58,6 +58,22 @@ public class RecipeService(
         return _localeCache.TryGetValue($"{templateId} Name", out var name) ? name : templateId;
     }
 
+    public List<ItemSearchResult> SearchItems(string query, int maxResults = 15)
+    {
+        if (string.IsNullOrWhiteSpace(query) || query.Length < 2) return [];
+        _localeCache ??= localeService.GetLocaleDb("en");
+
+        return _localeCache
+            .Where(kv => kv.Key.EndsWith(" Name") && kv.Value.Contains(query, StringComparison.OrdinalIgnoreCase))
+            .Take(maxResults)
+            .Select(kv => new ItemSearchResult
+            {
+                TemplateId = kv.Key[..^5], // Remove " Name" suffix
+                Name = kv.Value
+            })
+            .ToList();
+    }
+
     public List<RecipeViewModel> GetAllRecipes()
     {
         var recipes = hideoutTable.Production.Recipes;

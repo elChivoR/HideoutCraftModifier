@@ -34,3 +34,10 @@ public class RequirementViewModel
     public string? QuestId { get; set; }
     public int? Resource { get; set; }
 }
+
+public class ItemSearchResult
+{
+    public string TemplateId { get; set; } = "";
+    public string Name { get; set; } = "";
+    public override string ToString() => Name;
+}

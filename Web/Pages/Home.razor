@@ -76,206 +76,230 @@
             {
                 <MudPaper Elevation="0" Class="spt-panel pa-4">
                     <!-- Header -->
-                    <div class="d-flex align-center justify-space-between mb-4">
-                        <div class="d-flex align-center gap-2">
-                            <img src="@IconUrl(_selectedRecipe.EndProductId)" alt="" style="width:36px;height:36px;object-fit:contain;border-radius:4px;background:rgba(255,255,255,0.05);" />
+                    <div class="d-flex align-center justify-space-between" style="border-bottom:1px solid rgba(255,255,255,0.08);padding-bottom:14px;margin-bottom:16px;">
+                        <div class="d-flex align-center gap-3">
+                            <img src="@IconUrl(_selectedRecipe.EndProductId)" alt="" style="width:48px;height:48px;object-fit:contain;border-radius:6px;background:rgba(255,255,255,0.05);" />
                             <div>
-                                <MudText Typo="Typo.h6">@_selectedRecipe.EndProductName</MudText>
-                                <MudText Typo="Typo.caption" Class="mud-text-secondary">@_selectedRecipe.Id</MudText>
+                                <div class="d-flex align-center gap-2">
+                                    <MudText Typo="Typo.h6">@_selectedRecipe.EndProductName</MudText>
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Filled" Style="height:22px;font-size:11px;">@_selectedRecipe.AreaName</MudChip>
+                                </div>
+                                <MudText Typo="Typo.caption" Class="mud-text-secondary" Style="font-size:10px;">@_selectedRecipe.Id</MudText>
                             </div>
                         </div>
                         <MudButton Variant="Variant.Outlined"
                                    Color="Color.Error"
                                    Size="Size.Small"
+                                   StartIcon="@Icons.Material.Filled.DeleteOutline"
                                    OnClick="() => RemoveRecipe(_selectedRecipe)">
-                            Delete craft
+                            Delete
                         </MudButton>
                     </div>
 
-                    <!-- Station + Output Item -->
-                    <div class="d-flex gap-3 mb-3">
-                        <MudSelect @bind-Value="_editArea"
-                                   Label="Station"
-                                   Variant="Variant.Outlined"
-                                   Margin="Margin.Dense"
-                                   ReadOnly="true"
-                                   Style="flex:1;">
-                            @foreach (var area in _allAreas)
-                            {
-                                <MudSelectItem Value="@area">@area</MudSelectItem>
-                            }
-                        </MudSelect>
-
-                        <div style="flex:1;">
-                            <MudTextField Value="@_selectedRecipe.EndProductId"
-                                          Label="Output item (endProduct)"
-                                          Variant="Variant.Outlined"
-                                          Margin="Margin.Dense"
-                                          ReadOnly="true" />
-                            @if (!string.IsNullOrWhiteSpace(_selectedRecipe.EndProductId))
-                            {
-                                <div class="d-flex align-center gap-1 mt-1">
-                                    <img src="@IconUrl(_selectedRecipe.EndProductId)" alt="" style="width:20px;height:20px;object-fit:contain;border-radius:2px;background:rgba(255,255,255,0.05);" />
-                                    <MudText Typo="Typo.caption" Class="mud-text-secondary">@_selectedRecipe.EndProductName</MudText>
-                                </div>
-                            }
+                    <!-- Production -->
+                    <div class="hcm-section mb-3">
+                        <MudText Typo="Typo.overline" Class="mud-text-secondary mb-2">PRODUCTION</MudText>
+                        <div class="d-flex gap-3 align-center">
+                            <MudNumericField @bind-Value="_editProductionTime"
+                                             Label="Time (seconds)"
+                                             Min="0.0"
+                                             Variant="Variant.Outlined"
+                                             Margin="Margin.Dense"
+                                             Style="flex:1;" />
+                            <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Default" Style="height:24px;">@FormatTime(_editProductionTime)</MudChip>
+                            <MudNumericField @bind-Value="_editCount"
+                                             Label="Count"
+                                             Min="1"
+                                             Variant="Variant.Outlined"
+                                             Margin="Margin.Dense"
+                                             Style="max-width:90px;" />
+                            <MudNumericField @bind-Value="_editProductionLimitCount"
+                                             Label="Limit (0 = unlimited)"
+                                             Min="0"
+                                             Variant="Variant.Outlined"
+                                             Margin="Margin.Dense"
+                                             Style="max-width:150px;" />
                         </div>
                     </div>
 
-                    <!-- Production Time, Count, Limit -->
-                    <div class="d-flex gap-3 mb-3">
-                        <MudNumericField @bind-Value="_editProductionTime"
-                                         Label="Production time (seconds)"
-                                         Min="0.0"
-                                         Variant="Variant.Outlined"
-                                         Margin="Margin.Dense"
-                                         Style="flex:1;" />
-                        <MudNumericField @bind-Value="_editCount"
-                                         Label="Output count"
-                                         Min="1"
-                                         Variant="Variant.Outlined"
-                                         Margin="Margin.Dense"
-                                         Style="flex:1;" />
-                        <MudNumericField @bind-Value="_editProductionLimitCount"
-                                         Label="Production limit (0 = unlimited)"
-                                         Min="0"
-                                         Variant="Variant.Outlined"
-                                         Margin="Margin.Dense"
-                                         Style="flex:1;" />
-                    </div>
-
-                    <!-- Time display -->
-                    <MudText Typo="Typo.caption" Class="mud-text-secondary mb-3">@FormatTime(_editProductionTime)</MudText>
-
-                    <!-- Checkboxes -->
-                    <div class="d-flex flex-wrap gap-4 mb-4">
-                        <MudCheckBox @bind-Value="_editLocked" Label="Locked" Dense="true" Color="Color.Primary" />
-                        <MudCheckBox @bind-Value="_editContinuous" Label="Continuous" Dense="true" Color="Color.Primary" />
-                        <MudCheckBox @bind-Value="_editNeedFuel" Label="Needs fuel for all production time" Dense="true" Color="Color.Primary" />
-                        <MudCheckBox @bind-Value="_editIsEncoded" Label="Encoded (isEncoded)" Dense="true" Color="Color.Primary" />
-                        <MudCheckBox @bind-Value="_editIsCodeProduction" Label="Code production" Dense="true" Color="Color.Primary" />
+                    <!-- Flags -->
+                    <div class="hcm-section mb-3">
+                        <MudText Typo="Typo.overline" Class="mud-text-secondary mb-2">FLAGS</MudText>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;">
+                            <MudTooltip Text="Recipe is locked by default and must be unlocked (usually via quest completion)" Arrow="true" Placement="Placement.Top">
+                                <MudSwitch T="bool" @bind-Value="_editLocked" Label="Locked" Color="Color.Primary" />
+                            </MudTooltip>
+                            <MudTooltip Text="Production repeats automatically after completion" Arrow="true" Placement="Placement.Top">
+                                <MudSwitch T="bool" @bind-Value="_editContinuous" Label="Continuous" Color="Color.Primary" />
+                            </MudTooltip>
+                            <MudTooltip Text="Generator must have fuel running for the entire production duration" Arrow="true" Placement="Placement.Top">
+                                <MudSwitch T="bool" @bind-Value="_editNeedFuel" Label="Needs fuel" Color="Color.Primary" />
+                            </MudTooltip>
+                            <MudTooltip Text="Recipe uses an encoded/encrypted input (e.g. Christmas tree ornaments)" Arrow="true" Placement="Placement.Top">
+                                <MudSwitch T="bool" @bind-Value="_editIsEncoded" Label="Encoded" Color="Color.Primary" />
+                            </MudTooltip>
+                            <MudTooltip Text="Recipe produces a code or key as output" Arrow="true" Placement="Placement.Top">
+                                <MudSwitch T="bool" @bind-Value="_editIsCodeProduction" Label="Code production" Color="Color.Primary" />
+                            </MudTooltip>
+                        </div>
                     </div>
 
                     <!-- Requirements -->
-                    <fieldset class="hcm-fieldset mb-3">
-                        <legend>
-                            <MudText Typo="Typo.subtitle2">Requirements</MudText>
-                        </legend>
+                    <div class="hcm-section mb-3">
+                        <div class="d-flex align-center justify-space-between mb-2">
+                            <MudText Typo="Typo.overline" Class="mud-text-secondary">REQUIREMENTS (@_editRequirements.Count)</MudText>
+                            <MudIconButton Icon="@Icons.Material.Filled.Add"
+                                           Size="Size.Small"
+                                           Color="Color.Primary"
+                                           OnClick="AddRequirement" />
+                        </div>
 
-                        @for (var i = 0; i < _editRequirements.Count; i++)
-                        {
-                            var index = i;
-                            var req = _editRequirements[index];
-                            <MudPaper Elevation="0" Class="spt-panel pa-3 mb-2">
+                    @for (var i = 0; i < _editRequirements.Count; i++)
+                    {
+                        var index = i;
+                        var req = _editRequirements[index];
+                        <MudPaper Elevation="0" Class="spt-panel mb-2" Style="border-left:3px solid var(--mud-palette-primary);padding:10px 12px;">
+                            <!-- Row 1: Type selector + delete -->
+                            <div class="d-flex align-center gap-2 mb-2">
+                                <MudSelect @bind-Value="req.Type"
+                                           Variant="Variant.Outlined"
+                                           Margin="Margin.Dense"
+                                           Dense="true"
+                                           Style="max-width:130px;">
+                                    <MudSelectItem Value="@("Item")">Item</MudSelectItem>
+                                    <MudSelectItem Value="@("Area")">Area</MudSelectItem>
+                                    <MudSelectItem Value="@("Tool")">Tool</MudSelectItem>
+                                    <MudSelectItem Value="@("QuestComplete")">Quest</MudSelectItem>
+                                    <MudSelectItem Value="@("Resource")">Resource</MudSelectItem>
+                                </MudSelect>
+                                <div style="flex:1;"></div>
+                                <MudIconButton Icon="@Icons.Material.Filled.DeleteOutline"
+                                               Size="Size.Small"
+                                               Color="Color.Error"
+                                               OnClick="() => _editRequirements.RemoveAt(index)" />
+                            </div>
+
+                            <!-- Row 2: Type-specific fields -->
+                            @if (req.Type is "Item" or "Tool")
+                            {
                                 <div class="d-flex align-center gap-2">
-                                    <MudSelect @bind-Value="req.Type"
-                                               Label="Type"
+                                    <MudAutocomplete T="ItemSearchResult"
+                                                     Placeholder="Search item..."
+                                                     SearchFunc="@((q, _) => SearchItems(q))"
+                                                     ToStringFunc="@(r => r?.Name ?? "")"
+                                                     Value="req.SelectedItem"
+                                                     ValueChanged="@(r => { req.SelectedItem = r; req.TemplateId = r?.TemplateId; })"
+                                                     Variant="Variant.Outlined"
+                                                     Margin="Margin.Dense"
+                                                     Style="flex:1;"
+                                                     MinCharacters="2"
+                                                     DebounceInterval="300"
+                                                     MaxItems="15"
+                                                     ResetValueOnEmptyText="true"
+                                                     CoerceText="true"
+                                                     Dense="true" />
+                                    @if (req.Type == "Item")
+                                    {
+                                        <MudNumericField @bind-Value="req.Count"
+                                                         Label="x"
+                                                         Min="1"
+                                                         Variant="Variant.Outlined"
+                                                         Margin="Margin.Dense"
+                                                         Style="max-width:75px;" />
+                                    }
+                                    @if (req.Type == "Tool")
+                                    {
+                                        <MudCheckBox @bind-Value="req.IsFunctional" Label="Functional" Dense="true" Color="Color.Primary" Style="margin-bottom:0;" />
+                                    }
+                                </div>
+                                @if (!string.IsNullOrWhiteSpace(req.TemplateId) && req.TemplateId.Length == 24)
+                                {
+                                    <div class="d-flex align-center gap-1 mt-1">
+                                        <img src="@IconUrl(req.TemplateId)" alt="" style="width:20px;height:20px;object-fit:contain;border-radius:2px;background:rgba(255,255,255,0.05);" />
+                                        <MudText Typo="Typo.caption" Class="mud-text-secondary">@RecipeService.ResolveItemName(req.TemplateId)</MudText>
+                                    </div>
+                                }
+                            }
+                            else if (req.Type == "Area")
+                            {
+                                <div class="d-flex align-center gap-2">
+                                    <MudSelect @bind-Value="req.AreaTypeStr"
                                                Variant="Variant.Outlined"
                                                Margin="Margin.Dense"
-                                               Style="max-width:130px;">
-                                        <MudSelectItem Value="@("Item")">Item</MudSelectItem>
-                                        <MudSelectItem Value="@("Area")">Area</MudSelectItem>
-                                        <MudSelectItem Value="@("Tool")">Tool</MudSelectItem>
-                                        <MudSelectItem Value="@("QuestComplete")">Quest</MudSelectItem>
-                                        <MudSelectItem Value="@("Resource")">Resource</MudSelectItem>
+                                               Style="flex:1;">
+                                        @foreach (var area in _allAreas)
+                                        {
+                                            <MudSelectItem Value="@area">@area</MudSelectItem>
+                                        }
                                     </MudSelect>
-
-                                    @if (req.Type is "Item" or "Tool")
-                                    {
-                                        <MudTextField @bind-Value="req.TemplateId"
-                                                      Label="Item"
-                                                      Placeholder="Search item..."
-                                                      Variant="Variant.Outlined"
-                                                      Margin="Margin.Dense"
-                                                      Class="flex-grow-1" />
-                                        @if (req.Type == "Item")
-                                        {
-                                            <MudNumericField @bind-Value="req.Count"
-                                                             Label="Count"
-                                                             Min="1"
-                                                             Variant="Variant.Outlined"
-                                                             Margin="Margin.Dense"
-                                                             Style="max-width:80px;" />
-                                        }
-                                        @if (req.Type == "Tool")
-                                        {
-                                            <MudCheckBox @bind-Value="req.IsFunctional" Label="Functional" Dense="true" Color="Color.Primary" Style="margin-bottom:0;" />
-                                        }
-                                    }
-                                    else if (req.Type == "Area")
-                                    {
-                                        <MudSelect @bind-Value="req.AreaTypeStr"
-                                                   Label="Station"
-                                                   Variant="Variant.Outlined"
-                                                   Margin="Margin.Dense"
-                                                   Class="flex-grow-1">
-                                            @foreach (var area in _allAreas)
-                                            {
-                                                <MudSelectItem Value="@area">@area</MudSelectItem>
-                                            }
-                                        </MudSelect>
-                                        <MudNumericField @bind-Value="req.RequiredLevel"
-                                                         Label="Required level"
-                                                         Min="1"
-                                                         Variant="Variant.Outlined"
-                                                         Margin="Margin.Dense"
-                                                         Style="max-width:80px;" />
-                                    }
-                                    else if (req.Type == "QuestComplete")
-                                    {
-                                        <MudTextField @bind-Value="req.QuestId"
-                                                      Label="Quest ID"
-                                                      Variant="Variant.Outlined"
-                                                      Margin="Margin.Dense"
-                                                      Class="flex-grow-1" />
-                                    }
-                                    else if (req.Type == "Resource")
-                                    {
-                                        <MudTextField @bind-Value="req.TemplateId"
-                                                      Label="Template ID"
-                                                      Variant="Variant.Outlined"
-                                                      Margin="Margin.Dense"
-                                                      Class="flex-grow-1" />
-                                        <MudNumericField @bind-Value="req.Resource"
-                                                         Label="Amount"
-                                                         Min="1"
-                                                         Variant="Variant.Outlined"
-                                                         Margin="Margin.Dense"
-                                                         Style="max-width:100px;" />
-                                    }
-
-                                    <MudIconButton Icon="@Icons.Material.Filled.Close"
-                                                   Size="Size.Small"
-                                                   Color="Color.Error"
-                                                   OnClick="() => _editRequirements.RemoveAt(index)" />
+                                    <MudNumericField @bind-Value="req.RequiredLevel"
+                                                     Label="Lvl"
+                                                     Min="1"
+                                                     Variant="Variant.Outlined"
+                                                     Margin="Margin.Dense"
+                                                     Style="max-width:75px;" />
                                 </div>
-
-                                <div class="d-flex align-center gap-1" style="height:22px;margin-top:4px;margin-left:138px;">
-                                    @if (req.Type is "Item" or "Tool" or "Resource" && !string.IsNullOrWhiteSpace(req.TemplateId) && req.TemplateId.Length == 24)
-                                    {
-                                        <img src="@IconUrl(req.TemplateId)" alt="" style="width:18px;height:18px;object-fit:contain;border-radius:2px;background:rgba(255,255,255,0.05);" />
+                            }
+                            else if (req.Type == "QuestComplete")
+                            {
+                                <MudTextField @bind-Value="req.QuestId"
+                                              Placeholder="Quest ID"
+                                              Variant="Variant.Outlined"
+                                              Margin="Margin.Dense" />
+                            }
+                            else if (req.Type == "Resource")
+                            {
+                                <div class="d-flex align-center gap-2">
+                                    <MudAutocomplete T="ItemSearchResult"
+                                                     Placeholder="Search item..."
+                                                     SearchFunc="@((q, _) => SearchItems(q))"
+                                                     ToStringFunc="@(r => r?.Name ?? "")"
+                                                     Value="req.SelectedItem"
+                                                     ValueChanged="@(r => { req.SelectedItem = r; req.TemplateId = r?.TemplateId; })"
+                                                     Variant="Variant.Outlined"
+                                                     Margin="Margin.Dense"
+                                                     Style="flex:1;"
+                                                     MinCharacters="2"
+                                                     DebounceInterval="300"
+                                                     MaxItems="15"
+                                                     ResetValueOnEmptyText="true"
+                                                     CoerceText="true"
+                                                     Dense="true" />
+                                    <MudNumericField @bind-Value="req.Resource"
+                                                     Label="Amt"
+                                                     Min="1"
+                                                     Variant="Variant.Outlined"
+                                                     Margin="Margin.Dense"
+                                                     Style="max-width:75px;" />
+                                </div>
+                                @if (!string.IsNullOrWhiteSpace(req.TemplateId) && req.TemplateId.Length == 24)
+                                {
+                                    <div class="d-flex align-center gap-1 mt-1">
+                                        <img src="@IconUrl(req.TemplateId)" alt="" style="width:20px;height:20px;object-fit:contain;border-radius:2px;background:rgba(255,255,255,0.05);" />
                                         <MudText Typo="Typo.caption" Class="mud-text-secondary">@RecipeService.ResolveItemName(req.TemplateId)</MudText>
-                                    }
-                                </div>
-                            </MudPaper>
-                        }
+                                    </div>
+                                }
+                            }
 
-                        <MudButton Variant="Variant.Outlined"
-                                   Color="Color.Primary"
-                                   Size="Size.Small"
-                                   StartIcon="@Icons.Material.Filled.Add"
-                                   OnClick="AddRequirement">
-                            + Add requirement
-                        </MudButton>
-                    </fieldset>
+                        </MudPaper>
+                    }
+
+                    @if (_editRequirements.Count == 0)
+                    {
+                        <MudText Typo="Typo.body2" Class="mud-text-secondary pa-3" Align="Align.Center">No requirements</MudText>
+                    }
+                    </div>
 
                     <!-- Save -->
-                    <div class="d-flex justify-end">
-                        <MudButton Variant="Variant.Filled"
-                                   Color="Color.Warning"
-                                   OnClick="SaveChanges">
-                            Save Changes
-                        </MudButton>
+                    <div style="border-top:1px solid rgba(255,255,255,0.08);padding-top:12px;">
+                        <div class="d-flex justify-end">
+                            <MudButton Variant="Variant.Filled"
+                                       Color="Color.Warning"
+                                       StartIcon="@Icons.Material.Filled.Save"
+                                       OnClick="SaveChanges">
+                                Save Changes
+                            </MudButton>
+                        </div>
                     </div>
                 </MudPaper>
             }
@@ -362,6 +386,7 @@
         {
             Type = r.Type,
             TemplateId = r.TemplateId,
+            SelectedItem = r.TemplateId is not null ? new ItemSearchResult { TemplateId = r.TemplateId, Name = r.ItemName ?? r.TemplateId } : null,
             AreaTypeStr = r.AreaName,
             RequiredLevel = r.RequiredLevel,
             Count = r.Count,
@@ -382,6 +407,22 @@
         if (ts.TotalMinutes >= 1)
             return $"{ts.Minutes}m {ts.Seconds}s";
         return $"{ts.Seconds}s";
+    }
+
+    private static Color GetTypeColor(string type) => type switch
+    {
+        "Item" => Color.Warning,
+        "Tool" => Color.Info,
+        "Area" => Color.Success,
+        "QuestComplete" => Color.Secondary,
+        "Resource" => Color.Primary,
+        _ => Color.Default
+    };
+
+    private Task<IEnumerable<ItemSearchResult>> SearchItems(string query)
+    {
+        var results = RecipeService.SearchItems(query);
+        return Task.FromResult<IEnumerable<ItemSearchResult>>(results);
     }
 
     private void AddRequirement()
@@ -470,6 +511,7 @@
     {
         public string Type { get; set; } = "Item";
         public string? TemplateId { get; set; }
+        public ItemSearchResult? SelectedItem { get; set; }
         public string? AreaTypeStr { get; set; }
         public int? RequiredLevel { get; set; } = 1;
         public int? Count { get; set; } = 1;
