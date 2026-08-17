@@ -41,6 +41,12 @@ public class RecipeService(
     public void Initialize()
     {
         _modPath = modHelper.GetAbsolutePathToModFolder(Assembly.GetExecutingAssembly());
+        var configPath = Path.Combine(_modPath, "config.json");
+        if (!File.Exists(configPath))
+        {
+            File.WriteAllText(configPath, jsonUtil.Serialize(new ModConfig(), true));
+            logger.Success("[HCM] Created default config.json");
+        }
         _config = modHelper.GetJsonDataFromFile<ModConfig>(_modPath, "config.json") ?? new ModConfig();
         // Force English locale regardless of user's SPT language setting
         _localeCache = localeService.GetLocaleDb("en");
