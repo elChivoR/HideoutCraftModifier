@@ -57,6 +57,9 @@ public record RecipeModification
 
 public record RecipeAddition
 {
+    [JsonPropertyName("id")]
+    public string? Id { get; set; }
+
     [JsonPropertyName("areaType")]
     public string AreaType { get; set; } = "";
 

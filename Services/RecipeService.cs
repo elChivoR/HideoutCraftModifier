@@ -131,10 +131,11 @@ public class RecipeService(
     /// </summary>
     public string AddRecipe(RecipeAddition addition)
     {
-        // MongoId() with no args generates a unique ID (SPT's equivalent of ObjectId)
+        var recipeId = new MongoId();
+        addition.Id = (string)recipeId;
         var recipe = new HideoutProduction
         {
-            Id = new MongoId(),
+            Id = recipeId,
             AreaType = Enum.Parse<HideoutAreas>(addition.AreaType),
             ProductionTime = addition.ProductionTime,
             EndProduct = new MongoId(addition.EndProduct),
@@ -234,11 +235,17 @@ public class RecipeService(
         }
 
         var addedCount = 0;
+        var needsSave = false;
         foreach (var addition in _config.Additions)
         {
+            if (string.IsNullOrEmpty(addition.Id))
+            {
+                addition.Id = (string)new MongoId();
+                needsSave = true;
+            }
             var recipe = new HideoutProduction
             {
-                Id = new MongoId(),
+                Id = new MongoId(addition.Id),
                 AreaType = Enum.Parse<HideoutAreas>(addition.AreaType),
                 ProductionTime = addition.ProductionTime,
                 EndProduct = new MongoId(addition.EndProduct),
@@ -253,6 +260,7 @@ public class RecipeService(
             recipes.Add(recipe);
             addedCount++;
         }
+        if (needsSave) SaveConfig();
 
         if (removedCount + modifiedCount + addedCount > 0)
             logger.Success($"[HCM] Applied config: {addedCount} added, {modifiedCount} modified, {removedCount} removed");
