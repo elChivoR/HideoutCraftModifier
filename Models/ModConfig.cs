@@ -72,6 +72,24 @@ public record RecipeAddition
     [JsonPropertyName("count")]
     public int Count { get; set; } = 1;
 
+    [JsonPropertyName("productionLimitCount")]
+    public int ProductionLimitCount { get; set; }
+
+    [JsonPropertyName("locked")]
+    public bool Locked { get; set; }
+
+    [JsonPropertyName("continuous")]
+    public bool Continuous { get; set; }
+
+    [JsonPropertyName("needFuelForAllProductionTime")]
+    public bool NeedFuelForAllProductionTime { get; set; }
+
+    [JsonPropertyName("isEncoded")]
+    public bool IsEncoded { get; set; }
+
+    [JsonPropertyName("isCodeProduction")]
+    public bool IsCodeProduction { get; set; }
+
     [JsonPropertyName("requirements")]
     public List<RequirementConfig> Requirements { get; set; } = [];
 }

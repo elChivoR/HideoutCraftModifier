@@ -115,12 +115,27 @@ public class RecipeService(
         if (mod.IsCodeProduction.HasValue) recipe.IsCodeProduction = mod.IsCodeProduction.Value;
         if (mod.Requirements is not null) recipe.Requirements = mod.Requirements.Select(ToRequirement).ToList();
 
-        var existing = _config.Modifications.FirstOrDefault(m => m.RecipeId == recipeId);
-        if (existing is not null)
-            _config.Modifications.Remove(existing);
-
-        mod.RecipeId = recipeId;
-        _config.Modifications.Add(mod);
+        var addition = _config.Additions.FirstOrDefault(a => a.Id == recipeId);
+        if (addition is not null)
+        {
+            if (mod.ProductionTime.HasValue) addition.ProductionTime = mod.ProductionTime.Value;
+            if (mod.Count.HasValue) addition.Count = mod.Count.Value;
+            if (mod.ProductionLimitCount.HasValue) addition.ProductionLimitCount = mod.ProductionLimitCount.Value;
+            if (mod.Locked.HasValue) addition.Locked = mod.Locked.Value;
+            if (mod.Continuous.HasValue) addition.Continuous = mod.Continuous.Value;
+            if (mod.NeedFuelForAllProductionTime.HasValue) addition.NeedFuelForAllProductionTime = mod.NeedFuelForAllProductionTime.Value;
+            if (mod.IsEncoded.HasValue) addition.IsEncoded = mod.IsEncoded.Value;
+            if (mod.IsCodeProduction.HasValue) addition.IsCodeProduction = mod.IsCodeProduction.Value;
+            if (mod.Requirements is not null) addition.Requirements = mod.Requirements;
+        }
+        else
+        {
+            var existing = _config.Modifications.FirstOrDefault(m => m.RecipeId == recipeId);
+            if (existing is not null)
+                _config.Modifications.Remove(existing);
+            mod.RecipeId = recipeId;
+            _config.Modifications.Add(mod);
+        }
 
         SaveConfig();
     }
@@ -250,12 +265,13 @@ public class RecipeService(
                 ProductionTime = addition.ProductionTime,
                 EndProduct = new MongoId(addition.EndProduct),
                 Count = addition.Count,
+                ProductionLimitCount = addition.ProductionLimitCount,
                 Requirements = addition.Requirements.Select(ToRequirement).ToList(),
-                Locked = false,
-                Continuous = false,
-                NeedFuelForAllProductionTime = false,
-                IsEncoded = false,
-                IsCodeProduction = false
+                Locked = addition.Locked,
+                Continuous = addition.Continuous,
+                NeedFuelForAllProductionTime = addition.NeedFuelForAllProductionTime,
+                IsEncoded = addition.IsEncoded,
+                IsCodeProduction = addition.IsCodeProduction
             };
             recipes.Add(recipe);
             addedCount++;
