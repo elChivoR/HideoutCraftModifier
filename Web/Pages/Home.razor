@@ -73,8 +73,17 @@
                     </button>
                 </div>
 
-                <div class="d-flex justify-space-between align-center mb-2">
-                    <MudText Typo="Typo.caption" Class="mud-text-secondary">@FilteredRecipes.Count() crafts</MudText>
+                <div class="d-flex justify-space-between align-center gap-2 mb-2">
+                    <MudSelect T="string" @bind-Value="_recipeSort"
+                               Label="Sort"
+                               Variant="Variant.Outlined"
+                               Margin="Margin.Dense"
+                               Dense="true"
+                               Style="max-width:180px;">
+                        <MudSelectItem Value="@("name")">Name (A–Z)</MudSelectItem>
+                        <MudSelectItem Value="@("station")">Station</MudSelectItem>
+                        <MudSelectItem Value="@("time")">Time (fastest first)</MudSelectItem>
+                    </MudSelect>
                     <MudButton Variant="Variant.Outlined"
                                Color="Color.Warning"
                                Size="Size.Small"
@@ -378,6 +387,7 @@
     private string _searchText = "";
     private string? _areaFilter;
     private string _recipeTab = "default"; // "default" = ships with SPT (incl. modified), "custom" = user-added
+    private string _recipeSort = "name"; // "name" | "station" | "time"
     private List<string> _availableAreas = [];
     private RecipeViewModel? _selectedRecipe;
 
@@ -421,8 +431,19 @@
         return true;
     });
 
-    private IEnumerable<RecipeViewModel> FilteredRecipes =>
-        StationSearchFiltered.Where(r => _recipeTab == "custom" ? r.IsCustom : !r.IsCustom);
+    private IEnumerable<RecipeViewModel> FilteredRecipes
+    {
+        get
+        {
+            var list = StationSearchFiltered.Where(r => _recipeTab == "custom" ? r.IsCustom : !r.IsCustom);
+            return _recipeSort switch
+            {
+                "station" => list.OrderBy(r => r.AreaName).ThenBy(r => r.EndProductName, StringComparer.OrdinalIgnoreCase),
+                "time" => list.OrderBy(r => r.ProductionTime).ThenBy(r => r.EndProductName, StringComparer.OrdinalIgnoreCase),
+                _ => list.OrderBy(r => r.EndProductName, StringComparer.OrdinalIgnoreCase)
+            };
+        }
+    }
 
     protected override void OnInitialized()
     {
