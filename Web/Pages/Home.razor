@@ -145,10 +145,11 @@
                         </MudButton>
                     </div>
 
+                    <div class="hcm-detail-row mb-3">
                     <!-- Production -->
-                    <div class="hcm-section mb-3">
+                    <div class="hcm-section hcm-detail-col">
                         <MudText Typo="Typo.overline" Class="mud-text-secondary mb-2">PRODUCTION</MudText>
-                        <div class="d-flex gap-3 align-center">
+                        <div class="d-flex gap-3 align-center mb-2">
                             <MudTooltip Text="Total crafting duration in seconds" Arrow="true" Placement="Placement.Top">
                                 <MudNumericField @bind-Value="_editProductionTime"
                                                  Label="Time (seconds)"
@@ -158,6 +159,8 @@
                                                  Style="flex:1;" />
                             </MudTooltip>
                             <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Default" Style="height:24px;">@FormatTime(_editProductionTime)</MudChip>
+                        </div>
+                        <div class="d-flex gap-3 align-center">
                             <MudTooltip Text="Number of items produced per craft" Arrow="true" Placement="Placement.Top">
                                 <MudNumericField @bind-Value="_editCount"
                                                  Label="Count"
@@ -178,7 +181,7 @@
                     </div>
 
                     <!-- Flags -->
-                    <div class="hcm-section mb-3">
+                    <div class="hcm-section hcm-detail-col">
                         <MudText Typo="Typo.overline" Class="mud-text-secondary mb-2">FLAGS</MudText>
                         <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;">
                             <MudTooltip Text="Recipe is locked by default and must be unlocked (usually via quest completion)" Arrow="true" Placement="Placement.Top">
@@ -197,6 +200,7 @@
                                 <MudSwitch T="bool" @bind-Value="_editIsCodeProduction" Label="Code production" Color="Color.Warning" />
                             </MudTooltip>
                         </div>
+                    </div>
                     </div>
 
                     <!-- Requirements -->

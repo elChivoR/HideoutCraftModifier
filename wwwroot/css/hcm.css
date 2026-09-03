@@ -397,6 +397,18 @@
     padding: 14px 16px;
 }
 
+/* PRODUCTION + FLAGS side by side, stacking on a narrow panel */
+.hcm-detail-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.hcm-detail-row .hcm-detail-col {
+    flex: 1 1 300px;
+    min-width: 0;
+}
+
 /* Save row pinned to the bottom of the detail panel while it scrolls.
    Negative side margins bleed the backdrop across the MudPaper's pa-4. */
 .hcm-save-bar {
