@@ -19,7 +19,7 @@
                                href="@_update.Url"
                                target="_blank"
                                rel="noopener noreferrer">
-                                Nueva versión v@_update.LatestVersion
+                                New version v@_update.LatestVersion
                             </a>
                         }
                     </div>
@@ -37,17 +37,17 @@
 @if (_update is { Available: true } && !_updateDismissed)
 {
     <div class="hcm-update-toast">
-        <button class="hcm-update-toast-close" @onclick="() => _updateDismissed = true" aria-label="Cerrar">&times;</button>
-        <div class="hcm-update-toast-title">Actualización disponible</div>
+        <button class="hcm-update-toast-close" @onclick="() => _updateDismissed = true" aria-label="Close">&times;</button>
+        <div class="hcm-update-toast-title">Update available</div>
         <div class="hcm-update-toast-body">
-            Hay una nueva versión de Hideout Craft Modifier (<strong>v@_update.LatestVersion</strong>).
-            Tú tienes la @Version.
+            A new version of Hideout Craft Modifier is available (<strong>v@_update.LatestVersion</strong>).
+            You have @Version.
         </div>
         <a class="hcm-update-toast-link"
            href="@_update.Url"
            target="_blank"
            rel="noopener noreferrer">
-            Ver novedades y descargar →
+            View release and download →
         </a>
     </div>
 }

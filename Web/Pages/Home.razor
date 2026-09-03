@@ -69,7 +69,7 @@
                     <button type="button"
                             class="@(_recipeTab == "custom" ? "active" : "")"
                             @onclick='() => _recipeTab = "custom"'>
-                        Nuevas <span class="hcm-tab-count">@customCount</span>
+                        New <span class="hcm-tab-count">@customCount</span>
                     </button>
                 </div>
 
@@ -366,7 +366,7 @@
                         <div class="d-flex justify-end align-center gap-3">
                             @if (IsDirty)
                             {
-                                <MudText Typo="Typo.caption" Style="color:#facc15;font-weight:600;">● Cambios sin guardar</MudText>
+                                <MudText Typo="Typo.caption" Style="color:#facc15;font-weight:600;">● Unsaved changes</MudText>
                             }
                             <MudButton Variant="Variant.Filled"
                                        Color="Color.Warning"
@@ -420,7 +420,7 @@
         "BitcoinFarm", "Gym", "WeaponStand", "CircleOfCultists"
     ];
 
-    // Recipes matching the station + search filters, before the Default/Nuevas tab split.
+    // Recipes matching the station + search filters, before the Default/New tab split.
     // Drives the tab counters so they reflect what's currently in view.
     private IEnumerable<RecipeViewModel> StationSearchFiltered => _recipes.Where(r =>
     {
@@ -517,12 +517,12 @@
 
         var parameters = new DialogParameters
         {
-            { "ContentText", "Tienes cambios sin guardar en esta receta. ¿Descartarlos?" },
-            { "ButtonText", "Descartar" },
+            { "ContentText", "You have unsaved changes to this recipe. Discard them?" },
+            { "ButtonText", "Discard" },
             { "Color", Color.Error }
         };
         var options = new DialogOptions { MaxWidth = MaxWidth.ExtraSmall };
-        var dialog = await DialogService.ShowAsync<ConfirmDialog>("Cambios sin guardar", parameters, options);
+        var dialog = await DialogService.ShowAsync<ConfirmDialog>("Unsaved changes", parameters, options);
         var result = await dialog.Result;
         return result is { Canceled: false };
     }
@@ -695,7 +695,7 @@
         if (result is { Canceled: false, Data: string recipeId })
         {
             LoadRecipes();
-            _recipeTab = "custom"; // jump to the Nuevas tab so the new recipe is visible in the list
+            _recipeTab = "custom"; // jump to the New tab so the new recipe is visible in the list
             var newRecipe = _recipes.FirstOrDefault(r => r.Id == recipeId);
             if (newRecipe is not null)
                 SelectRecipe(newRecipe);
