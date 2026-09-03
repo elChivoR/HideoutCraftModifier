@@ -185,12 +185,11 @@ public class RecipeService(
         var recipe = recipes.FirstOrDefault(r => ((string)r.Id) == recipeId);
         if (recipe is null) return false;
 
-        var endProductId = (string)recipe.EndProduct;
         recipes.Remove(recipe);
 
         // If this was a user-added recipe, just remove it from additions.
         // Otherwise, track the original recipe ID in removals for persistence.
-        var addedRecipe = _config.Additions.FirstOrDefault(a => a.EndProduct == endProductId);
+        var addedRecipe = _config.Additions.FirstOrDefault(a => a.Id == recipeId);
         if (addedRecipe is not null)
         {
             _config.Additions.Remove(addedRecipe);
@@ -332,8 +331,9 @@ public class RecipeService(
 
     private static bool IsAddedRecipe(HideoutProduction recipe, RecipeAddition addition)
     {
-        return (string)recipe.EndProduct == addition.EndProduct
-               && recipe.AreaType?.ToString() == addition.AreaType;
+        // Match on the unique recipe Id, not EndProduct/AreaType — otherwise a custom
+        // recipe for an item/area that also has a default recipe would flag both as custom.
+        return !string.IsNullOrEmpty(addition.Id) && (string)recipe.Id == addition.Id;
     }
 
     /// <summary>

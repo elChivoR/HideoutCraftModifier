@@ -55,6 +55,24 @@
                               Immediate="true"
                               Class="mb-2" />
 
+                @{
+                    var tabBase = StationSearchFiltered.ToList();
+                    var defaultCount = tabBase.Count(r => !r.IsCustom);
+                    var customCount = tabBase.Count(r => r.IsCustom);
+                }
+                <div class="hcm-tab-toggle mb-2">
+                    <button type="button"
+                            class="@(_recipeTab == "default" ? "active" : "")"
+                            @onclick='() => _recipeTab = "default"'>
+                        Default <span class="hcm-tab-count">@defaultCount</span>
+                    </button>
+                    <button type="button"
+                            class="@(_recipeTab == "custom" ? "active" : "")"
+                            @onclick='() => _recipeTab = "custom"'>
+                        Nuevas <span class="hcm-tab-count">@customCount</span>
+                    </button>
+                </div>
+
                 <div class="d-flex justify-space-between align-center mb-2">
                     <MudText Typo="Typo.caption" Class="mud-text-secondary">@FilteredRecipes.Count() crafts</MudText>
                     <MudButton Variant="Variant.Outlined"
@@ -360,6 +378,7 @@
     private List<RecipeViewModel> _recipes = [];
     private string _searchText = "";
     private string? _areaFilter;
+    private string _recipeTab = "default"; // "default" = ships with SPT (incl. modified), "custom" = user-added
     private List<string> _availableAreas = [];
     private RecipeViewModel? _selectedRecipe;
 
@@ -384,7 +403,9 @@
         "BitcoinFarm", "Gym", "WeaponStand", "CircleOfCultists"
     ];
 
-    private IEnumerable<RecipeViewModel> FilteredRecipes => _recipes.Where(r =>
+    // Recipes matching the station + search filters, before the Default/Nuevas tab split.
+    // Drives the tab counters so they reflect what's currently in view.
+    private IEnumerable<RecipeViewModel> StationSearchFiltered => _recipes.Where(r =>
     {
         if (!string.IsNullOrWhiteSpace(_areaFilter) && r.AreaName != _areaFilter)
             return false;
@@ -400,6 +421,9 @@
 
         return true;
     });
+
+    private IEnumerable<RecipeViewModel> FilteredRecipes =>
+        StationSearchFiltered.Where(r => _recipeTab == "custom" ? r.IsCustom : !r.IsCustom);
 
     protected override void OnInitialized()
     {
@@ -597,6 +621,7 @@
         if (result is { Canceled: false, Data: string recipeId })
         {
             LoadRecipes();
+            _recipeTab = "custom"; // jump to the Nuevas tab so the new recipe is visible in the list
             var newRecipe = _recipes.FirstOrDefault(r => r.Id == recipeId);
             if (newRecipe is not null)
                 SelectRecipe(newRecipe);

@@ -251,6 +251,65 @@
     min-height: 24px;
 }
 
+/* Default / Nuevas segmented toggle above the recipe list */
+.hcm-tab-toggle {
+    display: flex;
+    gap: 0;
+    border: 1px solid var(--spt-border, #27272a);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.hcm-tab-toggle button {
+    flex: 1 1 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 7px 10px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    background: rgba(255, 255, 255, 0.02);
+    color: var(--spt-text-muted, #a1a1aa);
+    border: none;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+
+.hcm-tab-toggle button + button {
+    border-left: 1px solid var(--spt-border, #27272a);
+}
+
+.hcm-tab-toggle button:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--spt-text, #f8fafc);
+}
+
+.hcm-tab-toggle button.active {
+    background: rgba(250, 204, 21, 0.12);
+    color: #facc15;
+}
+
+.hcm-tab-toggle button:focus-visible {
+    outline: 2px solid var(--spt-accent, #facc15);
+    outline-offset: -2px;
+}
+
+.hcm-tab-count {
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.06);
+    color: inherit;
+}
+
+.hcm-tab-toggle button.active .hcm-tab-count {
+    background: rgba(250, 204, 21, 0.20);
+}
+
 /* Split panel layout */
 .hcm-split {
     display: flex;
