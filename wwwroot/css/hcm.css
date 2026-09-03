@@ -11,6 +11,21 @@
     border-left: 3px solid var(--mud-palette-warning);
 }
 
+/* Version pill next to the title — SPT amber "status pill" idiom */
+.hcm-version-badge {
+    display: inline-block;
+    border-radius: 999px;
+    padding: 2px 7px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    line-height: 1.4;
+    font-variant-numeric: tabular-nums;
+    color: #facc15;
+    background: rgba(250, 204, 21, 0.10);
+    border: 1px solid rgba(250, 204, 21, 0.4);
+}
+
 /* Split panel layout */
 .hcm-split {
     display: flex;

@@ -8,7 +8,10 @@
             <div class="d-flex align-center gap-3">
                 <MudIcon Icon="@Icons.Material.Filled.Build" Size="Size.Large" Color="Color.Warning" />
                 <div>
-                    <MudText Typo="Typo.h5" Class="spt-title">Hideout Craft Modifier</MudText>
+                    <div class="d-flex align-center gap-2">
+                        <MudText Typo="Typo.h5" Class="spt-title">Hideout Craft Modifier</MudText>
+                        <span class="hcm-version-badge">@Version</span>
+                    </div>
                     <MudText Typo="Typo.body2" Class="mud-text-secondary">Add, edit, or remove hideout crafting recipes</MudText>
                 </div>
             </div>
@@ -23,4 +26,7 @@
 @code {
     [Parameter, EditorRequired]
     public RenderFragment? ChildContent { get; set; }
+
+    // Same version SPT shows in its mod list — sourced from ModMetadata, not hardcoded here.
+    private static readonly string Version = $"v{new HideoutCraftModifier.ModMetadata().Version}";
 }
