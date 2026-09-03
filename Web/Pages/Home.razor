@@ -99,7 +99,7 @@
                 {
                     var isSelected = _selectedRecipe?.Id == recipe.Id;
                     <div class="hcm-recipe-item @(isSelected ? "hcm-recipe-selected" : "")"
-                         @onclick="() => SelectRecipe(recipe)">
+                         @onclick="() => TrySelectRecipe(recipe)">
                         <div class="d-flex align-center gap-2">
                             <img src="@IconUrl(recipe.EndProductId)" alt="" class="hcm-list-icon" loading="lazy" />
                             <div class="flex-grow-1" style="min-width:0;">
@@ -360,7 +360,11 @@
 
                     <!-- Save -->
                     <div style="border-top:1px solid rgba(255,255,255,0.08);padding-top:12px;">
-                        <div class="d-flex justify-end">
+                        <div class="d-flex justify-end align-center gap-3">
+                            @if (IsDirty)
+                            {
+                                <MudText Typo="Typo.caption" Style="color:#facc15;font-weight:600;">● Cambios sin guardar</MudText>
+                            }
                             <MudButton Variant="Variant.Filled"
                                        Color="Color.Warning"
                                        StartIcon="@Icons.Material.Filled.Save"
@@ -390,6 +394,7 @@
     private string _recipeSort = "name"; // "name" | "station" | "time"
     private List<string> _availableAreas = [];
     private RecipeViewModel? _selectedRecipe;
+    private string _pristineSignature = ""; // form state as of the last SelectRecipe, for dirty tracking
 
     // Edit state
     private string _editArea = "";
@@ -480,6 +485,50 @@
             QuestId = r.QuestId,
             Resource = r.Resource
         }).ToList();
+
+        _pristineSignature = CurrentFormSignature();
+    }
+
+    // Stable serialization of every editable field, used to detect unsaved changes.
+    private string CurrentFormSignature() => System.Text.Json.JsonSerializer.Serialize(new
+    {
+        _editProductionTime,
+        _editCount,
+        _editProductionLimitCount,
+        _editLocked,
+        _editContinuous,
+        _editNeedFuel,
+        _editIsEncoded,
+        _editIsCodeProduction,
+        reqs = _editRequirements.Select(r => new
+        {
+            r.Type, r.TemplateId, r.AreaTypeStr, r.RequiredLevel, r.Count, r.IsFunctional, r.QuestId, r.Resource
+        })
+    });
+
+    private bool IsDirty => _selectedRecipe is not null && CurrentFormSignature() != _pristineSignature;
+
+    private async Task<bool> ConfirmDiscardIfDirty()
+    {
+        if (!IsDirty) return true;
+
+        var parameters = new DialogParameters
+        {
+            { "ContentText", "Tienes cambios sin guardar en esta receta. ¿Descartarlos?" },
+            { "ButtonText", "Descartar" },
+            { "Color", Color.Error }
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.ExtraSmall };
+        var dialog = await DialogService.ShowAsync<ConfirmDialog>("Cambios sin guardar", parameters, options);
+        var result = await dialog.Result;
+        return result is { Canceled: false };
+    }
+
+    private async Task TrySelectRecipe(RecipeViewModel recipe)
+    {
+        if (recipe.Id == _selectedRecipe?.Id) return;
+        if (!await ConfirmDiscardIfDirty()) return;
+        SelectRecipe(recipe);
     }
 
     private static string IconUrl(string? templateId) =>
@@ -634,6 +683,8 @@
 
     private async Task OpenAddRecipeDialog()
     {
+        if (!await ConfirmDiscardIfDirty()) return;
+
         var options = new DialogOptions { MaxWidth = MaxWidth.ExtraSmall, FullWidth = true };
         var dialog = await DialogService.ShowAsync<AddRecipeDialog>("New craft", options);
         var result = await dialog.Result;
