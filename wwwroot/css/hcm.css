@@ -351,8 +351,8 @@
 }
 
 .hcm-recipe-selected {
-    background: rgba(var(--mud-palette-primary-rgb), 0.15) !important;
-    border-left-color: var(--mud-palette-primary);
+    background: rgba(250, 204, 21, 0.12) !important;
+    border-left-color: #facc15;
 }
 
 .hcm-list-icon {

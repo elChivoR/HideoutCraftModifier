@@ -173,19 +173,19 @@
                         <MudText Typo="Typo.overline" Class="mud-text-secondary mb-2">FLAGS</MudText>
                         <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;">
                             <MudTooltip Text="Recipe is locked by default and must be unlocked (usually via quest completion)" Arrow="true" Placement="Placement.Top">
-                                <MudSwitch T="bool" @bind-Value="_editLocked" Label="Locked" Color="Color.Primary" />
+                                <MudSwitch T="bool" @bind-Value="_editLocked" Label="Locked" Color="Color.Warning" />
                             </MudTooltip>
                             <MudTooltip Text="Production repeats automatically after completion" Arrow="true" Placement="Placement.Top">
-                                <MudSwitch T="bool" @bind-Value="_editContinuous" Label="Continuous" Color="Color.Primary" />
+                                <MudSwitch T="bool" @bind-Value="_editContinuous" Label="Continuous" Color="Color.Warning" />
                             </MudTooltip>
                             <MudTooltip Text="Generator must have fuel running for the entire production duration" Arrow="true" Placement="Placement.Top">
-                                <MudSwitch T="bool" @bind-Value="_editNeedFuel" Label="Needs fuel" Color="Color.Primary" />
+                                <MudSwitch T="bool" @bind-Value="_editNeedFuel" Label="Needs fuel" Color="Color.Warning" />
                             </MudTooltip>
                             <MudTooltip Text="Recipe uses an encoded/encrypted input (e.g. Christmas tree ornaments)" Arrow="true" Placement="Placement.Top">
-                                <MudSwitch T="bool" @bind-Value="_editIsEncoded" Label="Encoded" Color="Color.Primary" />
+                                <MudSwitch T="bool" @bind-Value="_editIsEncoded" Label="Encoded" Color="Color.Warning" />
                             </MudTooltip>
                             <MudTooltip Text="Recipe produces a code or key as output" Arrow="true" Placement="Placement.Top">
-                                <MudSwitch T="bool" @bind-Value="_editIsCodeProduction" Label="Code production" Color="Color.Primary" />
+                                <MudSwitch T="bool" @bind-Value="_editIsCodeProduction" Label="Code production" Color="Color.Warning" />
                             </MudTooltip>
                         </div>
                     </div>
@@ -196,7 +196,7 @@
                             <MudText Typo="Typo.overline" Class="mud-text-secondary">REQUIREMENTS (@_editRequirements.Count)</MudText>
                             <MudIconButton Icon="@Icons.Material.Filled.Add"
                                            Size="Size.Small"
-                                           Color="Color.Primary"
+                                           Color="Color.Warning"
                                            OnClick="AddRequirement" />
                         </div>
 
@@ -204,7 +204,7 @@
                     {
                         var index = i;
                         var req = _editRequirements[index];
-                        <MudPaper Elevation="0" Class="spt-panel mb-2" Style="border-left:3px solid var(--mud-palette-primary);padding:10px 12px;">
+                        <MudPaper Elevation="0" Class="spt-panel mb-2" Style="border-left:3px solid rgba(255,255,255,0.15);padding:10px 12px;">
                             <!-- Row 1: Type selector + delete -->
                             <div class="d-flex align-center gap-2 mb-2">
                                 <MudSelect @bind-Value="req.Type"
@@ -268,7 +268,7 @@
                                     }
                                     @if (req.Type == "Tool")
                                     {
-                                        <MudCheckBox @bind-Value="req.IsFunctional" Label="Functional" Dense="true" Color="Color.Primary" Style="margin-bottom:0;"/>
+                                        <MudCheckBox @bind-Value="req.IsFunctional" Label="Functional" Dense="true" Color="Color.Warning" Style="margin-bottom:0;"/>
                                     }
                                 </div>
                                 @*@if (!string.IsNullOrWhiteSpace(req.TemplateId) && req.TemplateId.Length == 24)
