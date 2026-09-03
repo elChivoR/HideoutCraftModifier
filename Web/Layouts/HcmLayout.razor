@@ -1,3 +1,5 @@
+@inject UpdateCheckService UpdateCheck
+
 <HeadContent>
     <link href="/HideoutCraftModifier/css/hcm.css" rel="stylesheet" />
 </HeadContent>
@@ -11,6 +13,15 @@
                     <div class="d-flex align-center gap-2">
                         <MudText Typo="Typo.h5" Class="spt-title">Hideout Craft Modifier</MudText>
                         <span class="hcm-version-badge">@Version</span>
+                        @if (_update is { Available: true })
+                        {
+                            <a class="hcm-update-badge"
+                               href="@_update.Url"
+                               target="_blank"
+                               rel="noopener noreferrer">
+                                Nueva versión v@_update.LatestVersion
+                            </a>
+                        }
                     </div>
                     <MudText Typo="Typo.body2" Class="mud-text-secondary">Add, edit, or remove hideout crafting recipes</MudText>
                 </div>
@@ -23,10 +34,36 @@
     </MudContainer>
 </div>
 
+@if (_update is { Available: true } && !_updateDismissed)
+{
+    <div class="hcm-update-toast">
+        <button class="hcm-update-toast-close" @onclick="() => _updateDismissed = true" aria-label="Cerrar">&times;</button>
+        <div class="hcm-update-toast-title">Actualización disponible</div>
+        <div class="hcm-update-toast-body">
+            Hay una nueva versión de Hideout Craft Modifier (<strong>v@_update.LatestVersion</strong>).
+            Tú tienes la @Version.
+        </div>
+        <a class="hcm-update-toast-link"
+           href="@_update.Url"
+           target="_blank"
+           rel="noopener noreferrer">
+            Ver novedades y descargar →
+        </a>
+    </div>
+}
+
 @code {
     [Parameter, EditorRequired]
     public RenderFragment? ChildContent { get; set; }
 
     // Same version SPT shows in its mod list — sourced from ModMetadata, not hardcoded here.
     private static readonly string Version = $"v{new HideoutCraftModifier.ModMetadata().Version}";
+
+    private UpdateInfo? _update;
+    private bool _updateDismissed;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _update = await UpdateCheck.GetUpdateInfoAsync();
+    }
 }

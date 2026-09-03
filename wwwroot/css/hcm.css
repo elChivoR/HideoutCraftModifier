@@ -26,6 +26,119 @@
     border: 1px solid rgba(250, 204, 21, 0.4);
 }
 
+/* "Nueva versión" pill — filled amber, clickable, opens the mod's release page */
+.hcm-update-badge {
+    display: inline-block;
+    border-radius: 999px;
+    padding: 2px 8px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    line-height: 1.4;
+    text-transform: uppercase;
+    text-decoration: none;
+    color: #78350f;
+    background: #fbbf24;
+    border: 1px solid #fbbf24;
+    transition: filter 0.15s, transform 0.15s;
+}
+
+.hcm-update-badge:hover {
+    filter: brightness(1.08);
+    transform: translateY(-1px);
+}
+
+.hcm-update-badge:focus-visible {
+    outline: 2px solid var(--spt-accent, #facc15);
+    outline-offset: 1px;
+}
+
+/* Floating update notice — bottom-right, dismissible */
+.hcm-update-toast {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    z-index: 1400;
+    width: 320px;
+    max-width: calc(100vw - 40px);
+    padding: 14px 16px 14px;
+    border-radius: 8px;
+    background: var(--spt-surface, rgba(9, 9, 11, 0.92));
+    border: 1px solid rgba(250, 204, 21, 0.4);
+    border-left: 3px solid #fbbf24;
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.5);
+    color: var(--spt-text, #f8fafc);
+    animation: hcm-toast-in 0.18s ease-out;
+}
+
+@keyframes hcm-toast-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.hcm-update-toast-close {
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    line-height: 20px;
+    font-size: 18px;
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+    color: var(--spt-text-muted, #a1a1aa);
+    cursor: pointer;
+}
+
+.hcm-update-toast-close:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--spt-text, #f8fafc);
+}
+
+.hcm-update-toast-close:focus-visible {
+    outline: 2px solid var(--spt-accent, #facc15);
+    outline-offset: 1px;
+}
+
+.hcm-update-toast-title {
+    font-weight: 700;
+    font-size: 13px;
+    margin-bottom: 4px;
+    padding-right: 20px;
+    color: #facc15;
+}
+
+.hcm-update-toast-body {
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--spt-text-muted, #a1a1aa);
+}
+
+.hcm-update-toast-body strong {
+    color: var(--spt-text, #f8fafc);
+    font-variant-numeric: tabular-nums;
+}
+
+.hcm-update-toast-link {
+    display: inline-block;
+    margin-top: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    text-decoration: none;
+    color: #facc15;
+}
+
+.hcm-update-toast-link:hover {
+    text-decoration: underline;
+}
+
+.hcm-update-toast-link:focus-visible {
+    outline: 2px solid var(--spt-accent, #facc15);
+    outline-offset: 1px;
+}
+
 /* Split panel layout */
 .hcm-split {
     display: flex;
