@@ -420,3 +420,16 @@
 .mud-input-control.mud-input-control-margin-dense {
     margin-top: 4px !important;
 }
+
+/* SPT's amber (#facc15) is a bright yellow — filled amber controls need
+   near-black text, not MudBlazor's default light "warning" contrast text
+   (which is illegible on it: Save Changes button, station chip in the
+   detail header, dialog confirm buttons). */
+.mud-button-filled-warning,
+.mud-button-filled-warning:hover,
+.mud-button-filled-warning .mud-button-label,
+.mud-button-filled-warning .mud-icon-root,
+.mud-chip-filled.mud-chip-color-warning,
+.mud-chip-filled.mud-chip-color-warning .mud-chip-content {
+    color: #1c1600 !important;
+}
