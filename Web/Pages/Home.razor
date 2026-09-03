@@ -7,22 +7,45 @@
 <PageTitle>HCM - Hideout Craft Modifier</PageTitle>
 
 <HcmLayout>
+    <!-- Full-width station filter bar -->
+    <MudPaper Elevation="0" Class="spt-panel hcm-station-bar pa-3 mb-4">
+        <div class="hcm-station-carousel">
+            <button type="button"
+                    class="hcm-station-card @(_areaFilter is null ? "hcm-station-card--active" : "")"
+                    @onclick="@(() => SelectStation(null))">
+                <span class="hcm-station-card__icon">
+                    <MudIcon Icon="@Icons.Material.Filled.GridView" />
+                </span>
+                <span class="hcm-station-card__label">All stations</span>
+            </button>
+            @foreach (var area in _availableAreas)
+            {
+                var a = area;
+                var img = StationImage(a);
+                <button type="button"
+                        class="hcm-station-card @(_areaFilter == a ? "hcm-station-card--active" : "")"
+                        @onclick="@(() => SelectStation(a))">
+                    <span class="hcm-station-card__icon">
+                        @if (img is not null)
+                        {
+                            <img class="hcm-station-card__img"
+                                 src="@img"
+                                 alt="@PrettyStation(a)"
+                                 loading="lazy"
+                                 onerror="this.classList.add('hcm-img-broken')" />
+                        }
+                        <MudIcon Icon="@StationIcon(a)" Class="hcm-station-card__fallback" />
+                    </span>
+                    <span class="hcm-station-card__label">@PrettyStation(a)</span>
+                </button>
+            }
+        </div>
+    </MudPaper>
+
     <div style="display:flex;gap:16px;align-items:flex-start;">
         <!-- Left Panel: Recipe List -->
         <MudPaper Elevation="0" Class="spt-panel" Style="width:500px;min-width:500px;height:calc(100vh - 140px);display:flex;flex-direction:column;overflow:hidden;position:sticky;top:16px;">
             <div style="flex-shrink:0;padding:12px;">
-                <MudSelect @bind-Value="_areaFilter"
-                           Label="Station"
-                           Variant="Variant.Outlined"
-                           Margin="Margin.Dense"
-                           Clearable="true"
-                           Class="mb-2">
-                    @foreach (var area in _availableAreas)
-                    {
-                        <MudSelectItem Value="@area">@area</MudSelectItem>
-                    }
-                </MudSelect>
-
                 <MudTextField @bind-Value="_searchText"
                               Placeholder="Search by item, station or ID..."
                               Adornment="Adornment.Start"
@@ -417,6 +440,82 @@
 
     private static string IconUrl(string? templateId) =>
         string.IsNullOrWhiteSpace(templateId) ? "" : $"/hcm/api/icon/{templateId}";
+
+    private void SelectStation(string? area) => _areaFilter = area;
+
+    // "BitcoinFarm" -> "Bitcoin Farm"
+    private static string PrettyStation(string area) =>
+        System.Text.RegularExpressions.Regex.Replace(area, "(?<=[a-z])(?=[A-Z])", " ");
+
+    // Real station art from tarkov.dev's CDN. Maps SPT's HideoutAreas enum names to
+    // tarkov.dev slugs (some differ: WaterCloset=lavatory, Kitchen=nutrition-unit,
+    // WeaponStand=weapon-rack, CircleOfCultists=cultist-circle). Null -> use StationIcon.
+    private static string? StationImage(string area)
+    {
+        var slug = area switch
+        {
+            "Vents" => "vents",
+            "Security" => "security",
+            "WaterCloset" => "lavatory",
+            "Stash" => "stash",
+            "Generator" => "generator",
+            "Heating" => "heating",
+            "WaterCollector" => "water-collector",
+            "MedStation" => "medstation",
+            "Kitchen" => "nutrition-unit",
+            "RestSpace" => "rest-space",
+            "Workbench" => "workbench",
+            "IntelligenceCenter" => "intelligence-center",
+            "ShootingRange" => "shooting-range",
+            "Library" => "library",
+            "ScavCase" => "scav-case",
+            "Illumination" => "illumination",
+            "ChristmasIllumination" => "illumination",
+            "AirFilteringUnit" => "air-filtering-unit",
+            "SolarPower" => "solar-power",
+            "BoozeGenerator" => "booze-generator",
+            "BitcoinFarm" => "bitcoin-farm",
+            "Gym" => "gym",
+            "WeaponStand" => "weapon-rack",
+            "CircleOfCultists" => "cultist-circle",
+            "HallOfFame" => "hall-of-fame",
+            "PlaceOfFame" => "hall-of-fame",
+            "GearRack" => "gear-rack",
+            "DefectiveWall" => "defective-wall",
+            _ => null
+        };
+        return slug is null ? null : $"https://assets.tarkov.dev/station-{slug}.png";
+    }
+
+    // Material icon per hideout station. Swap this for real station art later
+    // by changing only the card's icon markup in the carousel above.
+    private static string StationIcon(string area) => area switch
+    {
+        "Vents" => Icons.Material.Filled.Air,
+        "Security" => Icons.Material.Filled.Security,
+        "WaterCloset" => Icons.Material.Filled.Wc,
+        "Stash" => Icons.Material.Filled.Inventory2,
+        "Generator" => Icons.Material.Filled.Power,
+        "Heating" => Icons.Material.Filled.Whatshot,
+        "WaterCollector" => Icons.Material.Filled.Opacity,
+        "MedStation" => Icons.Material.Filled.MedicalServices,
+        "Kitchen" => Icons.Material.Filled.Restaurant,
+        "RestSpace" => Icons.Material.Filled.KingBed,
+        "Workbench" => Icons.Material.Filled.Build,
+        "IntelligenceCenter" => Icons.Material.Filled.Insights,
+        "ShootingRange" => Icons.Material.Filled.Adjust,
+        "Library" => Icons.Material.Filled.MenuBook,
+        "ScavCase" => Icons.Material.Filled.Casino,
+        "Illumination" => Icons.Material.Filled.Lightbulb,
+        "AirFilteringUnit" => Icons.Material.Filled.FilterAlt,
+        "SolarPower" => Icons.Material.Filled.WbSunny,
+        "BoozeGenerator" => Icons.Material.Filled.LocalBar,
+        "BitcoinFarm" => Icons.Material.Filled.Memory,
+        "Gym" => Icons.Material.Filled.FitnessCenter,
+        "WeaponStand" => Icons.Material.Filled.Hardware,
+        "CircleOfCultists" => Icons.Material.Filled.Groups,
+        _ => Icons.Material.Filled.Category
+    };
 
     private string FormatTime(double seconds)
     {

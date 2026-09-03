@@ -139,6 +139,118 @@
     outline-offset: 1px;
 }
 
+/* Station filter — full-width wrapping card row.
+   Caps at ~2 rows and scrolls internally on narrow screens instead of
+   growing unbounded and pushing the rest of the page down. */
+.hcm-station-carousel {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 2px;
+    max-height: 240px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+}
+
+.hcm-station-carousel::-webkit-scrollbar {
+    width: 6px;
+}
+
+.hcm-station-carousel::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.hcm-station-carousel::-webkit-scrollbar-thumb {
+    background: var(--spt-border-strong, #3f3f46);
+    border-radius: 999px;
+}
+
+.hcm-station-card {
+    flex: 1 1 120px;
+    min-width: 100px;
+    max-width: 220px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 8px 10px;
+    border: 1px solid var(--spt-border, #27272a);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.02);
+    color: var(--spt-text-muted, #a1a1aa);
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+
+.hcm-station-card:hover {
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--spt-text, #f8fafc);
+}
+
+.hcm-station-card:focus-visible {
+    outline: 2px solid var(--spt-accent, #facc15);
+    outline-offset: 1px;
+}
+
+.hcm-station-card--active {
+    border-color: rgba(250, 204, 21, 0.6);
+    background: rgba(250, 204, 21, 0.10);
+    color: #facc15;
+}
+
+.hcm-station-card__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+}
+
+.hcm-station-card__icon .mud-icon-root {
+    font-size: 36px;
+}
+
+.hcm-station-card__img {
+    width: 44px;
+    height: 44px;
+    object-fit: contain;
+    opacity: 0.85;
+    transition: opacity 0.15s;
+}
+
+.hcm-station-card:hover .hcm-station-card__img,
+.hcm-station-card--active .hcm-station-card__img {
+    opacity: 1;
+}
+
+/* Material fallback icon: hidden while a working <img> is present */
+.hcm-station-card__fallback {
+    display: none;
+}
+
+.hcm-station-card__img.hcm-img-broken {
+    display: none;
+}
+
+.hcm-station-card__img.hcm-img-broken + .hcm-station-card__fallback,
+.hcm-station-card__icon > .hcm-station-card__fallback:only-child {
+    display: inline-flex;
+}
+
+.hcm-station-card__label {
+    font-size: 10px;
+    font-weight: 600;
+    line-height: 1.2;
+    text-align: center;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-height: 24px;
+}
+
 /* Split panel layout */
 .hcm-split {
     display: flex;
