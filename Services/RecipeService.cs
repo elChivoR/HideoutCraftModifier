@@ -31,6 +31,9 @@ public class RecipeService(
     // Cached to avoid calling localeService.GetLocaleDb("en") on every item name resolution,
     // which was causing ~500ms delays when rendering the full recipe table.
     private Dictionary<string, string>? _localeCache;
+    // Snapshot of all original SPT recipes taken before ApplyConfig() removes/modifies any.
+    // Used to restore deleted or modified recipes without a server restart.
+    private Dictionary<string, HideoutProduction> _originalRecipes = [];
 
     public ModConfig Config => _config;
 
@@ -50,6 +53,13 @@ public class RecipeService(
         _config = modHelper.GetJsonDataFromFile<ModConfig>(_modPath, "config.json") ?? new ModConfig();
         // Force English locale regardless of user's SPT language setting
         _localeCache = localeService.GetLocaleDb("en");
+        // Deep-clone before ApplyConfig so the snapshot is not mutated when ApplyConfig
+        // modifies the live recipe objects in place (same references otherwise).
+        _originalRecipes = hideoutTable.Production.Recipes?
+            .ToDictionary(
+                r => (string)r.Id,
+                r => jsonUtil.Deserialize<HideoutProduction>(jsonUtil.Serialize(r))!)
+            ?? [];
         ApplyConfig();
     }
 
@@ -209,6 +219,82 @@ public class RecipeService(
         return true;
     }
 
+    public bool IsModified(string recipeId) =>
+        _config.Modifications.Any(m => m.RecipeId == recipeId);
+
+    /// <summary>
+    /// Returns ViewModels for all original SPT recipes that the user has deleted,
+    /// so the UI can display and restore them.
+    /// </summary>
+    public List<RecipeViewModel> GetRemovedRecipes()
+    {
+        return _config.Removals
+            .Select(id => _originalRecipes.TryGetValue(id, out var r) ? ToViewModel(r, false) : null)
+            .Where(vm => vm is not null)
+            .Cast<RecipeViewModel>()
+            .ToList();
+    }
+
+    /// <summary>
+    /// Restores a recipe to its original SPT state.
+    /// For deleted recipes: re-adds to the live table and removes from Removals.
+    /// For modified recipes: reverts live fields to snapshot values and removes from Modifications.
+    /// </summary>
+    /// <summary>
+    /// Returns true if the recipe has any user-applied changes (modification or removal).
+    /// </summary>
+    public bool HasUserChanges(string recipeId) =>
+        _config.Removals.Contains(recipeId) || _config.Modifications.Any(m => m.RecipeId == recipeId);
+
+    /// <summary>
+    /// Restores a recipe to its original SPT values. Returns true if changes were actually
+    /// reverted, false if there was nothing to restore (recipe already at original state).
+    /// </summary>
+    public bool RestoreRecipe(string recipeId)
+    {
+        if (!_originalRecipes.TryGetValue(recipeId, out var original)) return false;
+
+        var recipes = hideoutTable.Production.Recipes;
+        if (recipes is null) return false;
+
+        var didSomething = false;
+
+        // Restore deleted recipe
+        if (_config.Removals.Contains(recipeId))
+        {
+            _config.Removals.Remove(recipeId);
+            recipes.Add(original);
+            didSomething = true;
+        }
+
+        // Revert modifications by copying original field values back onto the live recipe
+        var modification = _config.Modifications.FirstOrDefault(m => m.RecipeId == recipeId);
+        if (modification is not null)
+        {
+            _config.Modifications.Remove(modification);
+            var live = recipes.FirstOrDefault(r => (string)r.Id == recipeId);
+            if (live is not null)
+            {
+                live.ProductionTime = original.ProductionTime;
+                live.Count = original.Count;
+                live.ProductionLimitCount = original.ProductionLimitCount;
+                live.Locked = original.Locked;
+                live.Continuous = original.Continuous;
+                live.NeedFuelForAllProductionTime = original.NeedFuelForAllProductionTime;
+                live.IsEncoded = original.IsEncoded;
+                live.IsCodeProduction = original.IsCodeProduction;
+                live.Requirements = original.Requirements;
+            }
+            didSomething = true;
+        }
+
+        if (!didSomething) return false;
+
+        SaveConfig();
+        logger.Success($"[HCM] Restored recipe {recipeId}");
+        return true;
+    }
+
     /// <summary>
     /// Applies saved config to SPT's in-memory recipe list on startup.
     /// Order matters: removals first, then modifications, then additions.
@@ -299,9 +385,10 @@ public class RecipeService(
     private RecipeViewModel ToViewModel(HideoutProduction recipe, bool isCustom)
     {
         var endProductId = (string)recipe.EndProduct;
+        var recipeId = (string)recipe.Id;
         return new RecipeViewModel
         {
-            Id = recipe.Id,
+            Id = recipeId,
             AreaType = recipe.AreaType ?? HideoutAreas.NotSet,
             EndProductId = endProductId,
             EndProductName = ResolveItemName(endProductId),
@@ -314,6 +401,7 @@ public class RecipeService(
             IsEncoded = recipe.IsEncoded ?? false,
             IsCodeProduction = recipe.IsCodeProduction ?? false,
             IsCustom = isCustom,
+            IsModified = !isCustom && IsModified(recipeId),
             Requirements = recipe.Requirements?.Select(r => new RequirementViewModel
             {
                 Type = r.Type ?? "",

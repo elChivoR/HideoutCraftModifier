@@ -59,17 +59,23 @@
                     var tabBase = StationSearchFiltered.ToList();
                     var defaultCount = tabBase.Count(r => !r.IsCustom);
                     var customCount = tabBase.Count(r => r.IsCustom);
+                    var removedCount = _removedRecipes.Count;
                 }
                 <div class="hcm-tab-toggle mb-2">
                     <button type="button"
                             class="@(_recipeTab == "default" ? "active" : "")"
-                            @onclick='() => _recipeTab = "default"'>
+                            @onclick='() => SwitchTab("default")'>
                         Default <span class="hcm-tab-count">@defaultCount</span>
                     </button>
                     <button type="button"
                             class="@(_recipeTab == "custom" ? "active" : "")"
-                            @onclick='() => _recipeTab = "custom"'>
+                            @onclick='() => SwitchTab("custom")'>
                         New <span class="hcm-tab-count">@customCount</span>
+                    </button>
+                    <button type="button"
+                            class="@(_recipeTab == "removed" ? "active" : "")"
+                            @onclick='() => SwitchTab("removed")'>
+                        Removed <span class="hcm-tab-count">@removedCount</span>
                     </button>
                 </div>
 
@@ -98,8 +104,9 @@
                 @foreach (var recipe in FilteredRecipes)
                 {
                     var isSelected = _selectedRecipe?.Id == recipe.Id;
+                    var isRemovedTab = _recipeTab == "removed";
                     <div class="hcm-recipe-item @(isSelected ? "hcm-recipe-selected" : "")"
-                         @onclick="() => TrySelectRecipe(recipe)">
+                         @onclick="() => TrySelectRecipe(recipe, isRemovedTab)">
                         <div class="d-flex align-center gap-2">
                             <img src="@IconUrl(recipe.EndProductId)" alt="" class="hcm-list-icon" loading="lazy" />
                             <div class="flex-grow-1" style="min-width:0;">
@@ -121,7 +128,35 @@
 
         <!-- Right Panel: Detail/Edit -->
         <div style="flex:1;min-width:0;">
-            @if (_selectedRecipe is not null)
+            @if (_selectedRecipe is not null && _selectedIsRemoved)
+            {
+                <MudPaper Elevation="0" Class="spt-panel pa-4">
+                    <div class="d-flex align-center justify-space-between" style="border-bottom:1px solid rgba(255,255,255,0.08);padding-bottom:14px;margin-bottom:16px;">
+                        <div class="d-flex align-center gap-3">
+                            <img src="@IconUrl(_selectedRecipe.EndProductId)" alt="" style="width:48px;height:48px;object-fit:contain;border-radius:6px;background:rgba(255,255,255,0.05);" />
+                            <div>
+                                <div class="d-flex align-center gap-2">
+                                    <MudText Typo="Typo.h6">@_selectedRecipe.EndProductName</MudText>
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Filled" Style="height:22px;font-size:11px;">@_selectedRecipe.AreaName</MudChip>
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Error" Variant="Variant.Outlined" Style="height:22px;font-size:11px;">Removed</MudChip>
+                                </div>
+                                <MudText Typo="Typo.caption" Class="mud-text-secondary" Style="font-size:10px;">@_selectedRecipe.Id</MudText>
+                            </div>
+                        </div>
+                        <MudButton Variant="Variant.Filled"
+                                   Color="Color.Info"
+                                   Size="Size.Small"
+                                   StartIcon="@Icons.Material.Filled.RestoreFromTrash"
+                                   OnClick="() => RestoreRecipe(_selectedRecipe)">
+                            Restore
+                        </MudButton>
+                    </div>
+                    <MudText Typo="Typo.body2" Class="mud-text-secondary">
+                        This recipe was removed. Click <strong>Restore</strong> to bring it back with its original SPT values.
+                    </MudText>
+                </MudPaper>
+            }
+            else if (_selectedRecipe is not null)
             {
                 <MudPaper Elevation="0" Class="spt-panel pa-4">
                     <!-- Header -->
@@ -136,13 +171,25 @@
                                 <MudText Typo="Typo.caption" Class="mud-text-secondary" Style="font-size:10px;">@_selectedRecipe.Id</MudText>
                             </div>
                         </div>
-                        <MudButton Variant="Variant.Outlined"
-                                   Color="Color.Error"
-                                   Size="Size.Small"
-                                   StartIcon="@Icons.Material.Filled.DeleteOutline"
-                                   OnClick="() => RemoveRecipe(_selectedRecipe)">
-                            Delete
-                        </MudButton>
+                        <div class="d-flex gap-2">
+                            @if (!_selectedRecipe.IsCustom)
+                            {
+                                <MudButton Variant="Variant.Outlined"
+                                           Color="Color.Info"
+                                           Size="Size.Small"
+                                           StartIcon="@Icons.Material.Filled.RestoreFromTrash"
+                                           OnClick="() => RestoreRecipe(_selectedRecipe)">
+                                    Restore original
+                                </MudButton>
+                            }
+                            <MudButton Variant="Variant.Outlined"
+                                       Color="Color.Error"
+                                       Size="Size.Small"
+                                       StartIcon="@Icons.Material.Filled.DeleteOutline"
+                                       OnClick="() => RemoveRecipe(_selectedRecipe)">
+                                Delete
+                            </MudButton>
+                        </div>
                     </div>
 
                     <div class="hcm-detail-row mb-3">
@@ -391,12 +438,14 @@
 
 @code {
     private List<RecipeViewModel> _recipes = [];
+    private List<RecipeViewModel> _removedRecipes = [];
     private string _searchText = "";
     private string? _areaFilter;
-    private string _recipeTab = "default"; // "default" = ships with SPT (incl. modified), "custom" = user-added
+    private string _recipeTab = "default"; // "default" = ships with SPT (incl. modified), "custom" = user-added, "removed" = deleted originals
     private string _recipeSort = "name"; // "name" | "station" | "time"
     private List<string> _availableAreas = [];
     private RecipeViewModel? _selectedRecipe;
+    private bool _selectedIsRemoved;
     private string _pristineSignature = ""; // form state as of the last SelectRecipe, for dirty tracking
 
     // Edit state
@@ -443,7 +492,22 @@
     {
         get
         {
-            var list = StationSearchFiltered.Where(r => _recipeTab == "custom" ? r.IsCustom : !r.IsCustom);
+            IEnumerable<RecipeViewModel> list = _recipeTab == "removed"
+                ? _removedRecipes.Where(r =>
+                {
+                    if (!string.IsNullOrWhiteSpace(_areaFilter) && r.AreaName != _areaFilter) return false;
+                    if (!string.IsNullOrWhiteSpace(_searchText))
+                    {
+                        var q = _searchText;
+                        if (!r.EndProductName.Contains(q, StringComparison.OrdinalIgnoreCase) &&
+                            !r.AreaName.Contains(q, StringComparison.OrdinalIgnoreCase) &&
+                            !r.Id.Contains(q, StringComparison.OrdinalIgnoreCase))
+                            return false;
+                    }
+                    return true;
+                })
+                : StationSearchFiltered.Where(r => _recipeTab == "custom" ? r.IsCustom : !r.IsCustom);
+
             return _recipeSort switch
             {
                 "station" => list.OrderBy(r => r.AreaName).ThenBy(r => r.EndProductName, StringComparer.OrdinalIgnoreCase),
@@ -461,11 +525,13 @@
     private void LoadRecipes()
     {
         _recipes = RecipeService.GetAllRecipes();
+        _removedRecipes = RecipeService.GetRemovedRecipes();
         _availableAreas = _recipes.Select(r => r.AreaName).Distinct().OrderBy(a => a).ToList();
     }
 
-    private void SelectRecipe(RecipeViewModel recipe)
+    private void SelectRecipe(RecipeViewModel recipe, bool isRemoved = false)
     {
+        _selectedIsRemoved = isRemoved;
         _selectedRecipe = recipe;
         _editArea = recipe.AreaName;
         _editProductionTime = recipe.ProductionTime;
@@ -527,11 +593,19 @@
         return result is { Canceled: false };
     }
 
-    private async Task TrySelectRecipe(RecipeViewModel recipe)
+    private async Task TrySelectRecipe(RecipeViewModel recipe, bool isRemoved = false)
     {
         if (recipe.Id == _selectedRecipe?.Id) return;
         if (!await ConfirmDiscardIfDirty()) return;
-        SelectRecipe(recipe);
+        SelectRecipe(recipe, isRemoved);
+    }
+
+    private async Task SwitchTab(string tab)
+    {
+        if (!await ConfirmDiscardIfDirty()) return;
+        _recipeTab = tab;
+        _selectedRecipe = null;
+        _selectedIsRemoved = false;
     }
 
     private static string IconUrl(string? templateId) =>
@@ -721,6 +795,41 @@
             _selectedRecipe = null;
             LoadRecipes();
             Snackbar.Add("Recipe removed!", Severity.Warning);
+        }
+    }
+
+    private async Task RestoreRecipe(RecipeViewModel recipe)
+    {
+        var parameters = new DialogParameters
+        {
+            { "ContentText", $"Restore {recipe.EndProductName} in {recipe.AreaName} to its original SPT values?" },
+            { "ButtonText", "Restore" },
+            { "Color", Color.Info }
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.ExtraSmall };
+        var dialog = await DialogService.ShowAsync<ConfirmDialog>("Restore Recipe", parameters, options);
+        var result = await dialog.Result;
+
+        if (result is { Canceled: false })
+        {
+            var restoredId = recipe.Id;
+            var didRestore = RecipeService.RestoreRecipe(restoredId);
+            LoadRecipes();
+
+            if (didRestore)
+            {
+                _selectedIsRemoved = false;
+                var restoredRecipe = _recipes.FirstOrDefault(r => r.Id == restoredId);
+                if (restoredRecipe is not null)
+                    SelectRecipe(restoredRecipe);
+                else
+                    _selectedRecipe = null;
+                Snackbar.Add("Recipe restored to original!", Severity.Success);
+            }
+            else
+            {
+                Snackbar.Add("This recipe already has its original values.", Severity.Info);
+            }
         }
     }
 

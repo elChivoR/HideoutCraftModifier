@@ -19,6 +19,7 @@ public class RecipeViewModel
     public bool IsCodeProduction { get; set; }
     public List<RequirementViewModel> Requirements { get; set; } = [];
     public bool IsCustom { get; set; }
+    public bool IsModified { get; set; }
 }
 
 public class RequirementViewModel
