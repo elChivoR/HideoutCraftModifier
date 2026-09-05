@@ -30,14 +30,14 @@ jobs:
           dotnet-version: '10.0.x'
 
       - name: Build
-        run: dotnet build HideoutCraftModifier/HideoutCraftModifier.sln -c Release
+        run: dotnet build HideoutCraftModifier.sln -c Release
 
       - name: VirusTotal scan
         id: vt
         env:
           VT_API_KEY: ${{ secrets.VT_API_KEY }}
         run: |
-          DLL=HideoutCraftModifier/bin/Release/HideoutCraftModifier/HideoutCraftModifier.dll
+          DLL=bin/Release/HideoutCraftModifier/HideoutCraftModifier.dll
 
           UPLOAD=$(curl -s -X POST https://www.virustotal.com/api/v3/files \
             -H "x-apikey: $VT_API_KEY" \
@@ -86,7 +86,7 @@ jobs:
           git push origin "$TAG"
 
           RELEASE_ARGS=(release create "$TAG" \
-            "HideoutCraftModifier/bin/Release/HideoutCraftModifier.zip#HideoutCraftModifier.zip" \
+            "bin/Release/HideoutCraftModifier.zip#HideoutCraftModifier.zip" \
             --title "$TAG" \
             --notes "${NOTES}${VT_SECTION}")
           [ "${{ inputs.prerelease }}" = "true" ] && RELEASE_ARGS+=(--prerelease) || RELEASE_ARGS+=(--latest)
