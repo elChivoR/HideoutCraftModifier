@@ -1,0 +1,93 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Version tag (e.g. v1.5.0)'
+        required: true
+        type: string
+      notes:
+        description: 'Release notes (use \n for line breaks)'
+        required: true
+        type: string
+      prerelease:
+        description: 'Publish as pre-release'
+        type: boolean
+        default: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Build
+        run: dotnet build HideoutCraftModifier/HideoutCraftModifier.sln -c Release
+
+      - name: VirusTotal scan
+        id: vt
+        env:
+          VT_API_KEY: ${{ secrets.VT_API_KEY }}
+        run: |
+          DLL=HideoutCraftModifier/bin/Release/HideoutCraftModifier/HideoutCraftModifier.dll
+
+          UPLOAD=$(curl -s -X POST https://www.virustotal.com/api/v3/files \
+            -H "x-apikey: $VT_API_KEY" \
+            -F "file=@$DLL")
+          ANALYSIS_ID=$(echo "$UPLOAD" | jq -r '.data.id')
+          echo "Analysis ID: $ANALYSIS_ID"
+
+          for i in $(seq 1 20); do
+            sleep 15
+            RESULT=$(curl -s "https://www.virustotal.com/api/v3/analyses/$ANALYSIS_ID" \
+              -H "x-apikey: $VT_API_KEY")
+            STATUS=$(echo "$RESULT" | jq -r '.data.attributes.status')
+            echo "[$i] $STATUS"
+            if [ "$STATUS" = "completed" ]; then
+              echo "sha256=$(echo "$RESULT" | jq -r '.meta.file_info.sha256')" >> "$GITHUB_OUTPUT"
+              echo "malicious=$(echo "$RESULT" | jq -r '.data.attributes.stats.malicious')" >> "$GITHUB_OUTPUT"
+              echo "suspicious=$(echo "$RESULT" | jq -r '.data.attributes.stats.suspicious')" >> "$GITHUB_OUTPUT"
+              echo "total=$(echo "$RESULT" | jq '[.data.attributes.stats | to_entries[] | .value] | add')" >> "$GITHUB_OUTPUT"
+              break
+            fi
+          done
+
+      - name: Tag and publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="${{ inputs.tag }}"
+          NOTES=$(printf '%b' "${{ inputs.notes }}")
+
+          SHA256="${{ steps.vt.outputs.sha256 }}"
+          if [ -n "$SHA256" ]; then
+            MALICIOUS="${{ steps.vt.outputs.malicious }}"
+            SUSPICIOUS="${{ steps.vt.outputs.suspicious }}"
+            TOTAL="${{ steps.vt.outputs.total }}"
+            VT_URL="https://www.virustotal.com/gui/file/$SHA256/detection"
+            [ "$MALICIOUS" = "0" ] && [ "$SUSPICIOUS" = "0" ] && BADGE="✅" || BADGE="⚠️"
+            VT_SECTION=$(printf '\n\n---\n### %s VirusTotal scan\n%s malicious · %s suspicious · out of %s engines · [View full report](%s)' \
+              "$BADGE" "$MALICIOUS" "$SUSPICIOUS" "$TOTAL" "$VT_URL")
+          else
+            VT_SECTION=$(printf '\n\n---\n> ⚠️ VirusTotal scan timed out.')
+          fi
+
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git tag "$TAG"
+          git push origin "$TAG"
+
+          RELEASE_ARGS=(release create "$TAG" \
+            "HideoutCraftModifier/bin/Release/HideoutCraftModifier.zip#HideoutCraftModifier.zip" \
+            --title "$TAG" \
+            --notes "${NOTES}${VT_SECTION}")
+          [ "${{ inputs.prerelease }}" = "true" ] && RELEASE_ARGS+=(--prerelease) || RELEASE_ARGS+=(--latest)
+          gh "${RELEASE_ARGS[@]}"
