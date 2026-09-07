@@ -71,15 +71,15 @@ jobs:
       - name: Tag and publish release
         env:
           GH_TOKEN: ${{ github.token }}
+          NOTES: ${{ steps.changelog.outputs.notes }}
+          SHA256: ${{ steps.vt.outputs.sha256 }}
+          MALICIOUS: ${{ steps.vt.outputs.malicious }}
+          SUSPICIOUS: ${{ steps.vt.outputs.suspicious }}
+          TOTAL: ${{ steps.vt.outputs.total }}
         run: |
           TAG="${{ inputs.tag }}"
-          NOTES="${{ steps.changelog.outputs.notes }}"
 
-          SHA256="${{ steps.vt.outputs.sha256 }}"
           if [ -n "$SHA256" ]; then
-            MALICIOUS="${{ steps.vt.outputs.malicious }}"
-            SUSPICIOUS="${{ steps.vt.outputs.suspicious }}"
-            TOTAL="${{ steps.vt.outputs.total }}"
             VT_URL="https://www.virustotal.com/gui/file/$SHA256/detection"
             [ "$MALICIOUS" = "0" ] && [ "$SUSPICIOUS" = "0" ] && BADGE="✅" || BADGE="⚠️"
             VT_SECTION=$(printf '\n\n---\n### %s VirusTotal scan\n%s malicious · %s suspicious · out of %s engines · [View full report](%s)' \
