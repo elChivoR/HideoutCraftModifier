@@ -24,7 +24,14 @@
                          MinCharacters="2"
                          DebounceInterval="300"
                          MaxItems="15"
-                         Dense="true" />
+                         Dense="true"
+                         Class="mb-3" />
+
+        <MudNumericField @bind-Value="_count"
+                         Label="Output quantity"
+                         Variant="Variant.Outlined"
+                         Margin="Margin.Dense"
+                         Min="1" />
 
         @if (!string.IsNullOrWhiteSpace(_endProduct) && _endProduct.Length == 24)
         {
@@ -46,6 +53,7 @@
 
     private string _areaType = "Workbench";
     private string _endProduct = "";
+    private int _count = 1;
     private List<string> _areas = [];
 
     protected override void OnInitialized()
@@ -76,7 +84,7 @@
             AreaType = _areaType,
             EndProduct = _endProduct,
             ProductionTime = 60,
-            Count = 1,
+            Count = _count,
             Requirements =
             [
                 new RequirementConfig
