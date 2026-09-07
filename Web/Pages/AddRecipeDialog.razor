@@ -9,7 +9,7 @@
                    Class="mb-3">
             @foreach (var area in _areas)
             {
-                <MudSelectItem Value="@area">@area</MudSelectItem>
+                <MudSelectItem Value="@area">@PrettyStation(area)</MudSelectItem>
             }
         </MudSelect>
 
@@ -46,15 +46,17 @@
 
     private string _areaType = "Workbench";
     private string _endProduct = "";
+    private List<string> _areas = [];
 
-    private static readonly List<string> _areas =
-    [
-        "Vents", "Security", "WaterCloset", "Stash", "Generator", "Heating",
-        "WaterCollector", "MedStation", "Kitchen", "RestSpace", "Workbench",
-        "IntelligenceCenter", "ShootingRange", "Library", "ScavCase",
-        "Illumination", "AirFilteringUnit", "SolarPower", "BoozeGenerator",
-        "BitcoinFarm", "Gym", "WeaponStand", "CircleOfCultists"
-    ];
+    protected override void OnInitialized()
+    {
+        _areas = RecipeService.GetCraftingAreaTypes();
+        if (!_areas.Contains(_areaType) && _areas.Count > 0)
+            _areaType = _areas[0];
+    }
+
+    private static string PrettyStation(string area) =>
+        System.Text.RegularExpressions.Regex.Replace(area, "(?<=[a-z])(?=[A-Z])", " ");
 
     private Task<IEnumerable<ItemSearchResult>> SearchItems(string query)
     {

@@ -98,6 +98,18 @@ public class RecipeService(
         return recipes.Select(r => ToViewModel(r, _config.Additions.Any(a => IsAddedRecipe(r, a)))).ToList();
     }
 
+    public List<string> GetCraftingAreaTypes()
+    {
+        var recipes = hideoutTable.Production.Recipes;
+        if (recipes is null) return [];
+        return recipes
+            .Where(r => r.AreaType.HasValue)
+            .Select(r => r.AreaType!.Value.ToString())
+            .Distinct()
+            .OrderBy(a => a)
+            .ToList();
+    }
+
     public RecipeViewModel? GetRecipe(string recipeId)
     {
         var recipe = FindRecipe(recipeId);
