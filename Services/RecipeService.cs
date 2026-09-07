@@ -2,6 +2,7 @@ using System.Reflection;
 using HideoutCraftModifier.Models;
 using SPTarkov.Common.Models.Logging;
 using SPTarkov.DI.Annotations;
+using SPTarkov.Server.Core.Helpers.Items;
 using SPTarkov.Server.Core.Helpers.Server;
 using SPTarkov.Server.Core.Models.Common;
 using SPTarkov.Server.Core.Models.Eft.Hideout;
@@ -23,6 +24,7 @@ public class RecipeService(
     ISptLogger<RecipeService> logger,
     HideoutTable hideoutTable,
     LocaleService localeService,
+    ItemHelper itemHelper,
     ModHelper modHelper,
     JsonUtil jsonUtil)
 {
@@ -81,11 +83,13 @@ public class RecipeService(
 
         return _localeCache
             .Where(kv => kv.Key.EndsWith(" Name") && kv.Value.Contains(query, StringComparison.OrdinalIgnoreCase))
+            .Select(kv => kv.Key[..^5])
+            .Where(tpl => tpl.Length == 24 && itemHelper.IsValidItem(new MongoId(tpl), new HashSet<MongoId>()))
             .Take(maxResults)
-            .Select(kv => new ItemSearchResult
+            .Select(tpl => new ItemSearchResult
             {
-                TemplateId = kv.Key[..^5], // Remove " Name" suffix
-                Name = kv.Value
+                TemplateId = tpl,
+                Name = _localeCache[$"{tpl} Name"]
             })
             .ToList();
     }
