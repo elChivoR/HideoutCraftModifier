@@ -122,6 +122,17 @@ Icons are fetched from the tarkov.dev CDN on first request and cached in-memory 
 | `SPTarkov.Server.Web` | Blazor integration (`IModBlazorMetadata`) |
 | `MudBlazor` | UI component library (dark theme) |
 
+## Network Activity
+
+This mod makes two types of outbound requests:
+
+| Destination | When | Data sent | Purpose |
+|-------------|------|-----------|---------|
+| `assets.tarkov.dev` | On first display of an item icon | Item template ID (in URL) | Fetch item icon images |
+| `api.github.com` | Once at startup, then at most every 6 hours | None (unauthenticated GET) | Check for a newer release |
+
+Icons are cached in-memory for the server's lifetime — each item is fetched at most once per session. The update check is fully fail-safe and only logs at Debug level; no data is collected or transmitted beyond the request itself.
+
 ## License
 
 MIT
