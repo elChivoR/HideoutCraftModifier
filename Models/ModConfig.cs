@@ -17,6 +17,12 @@ public record ModConfig
 
     [JsonPropertyName("removals")]
     public List<string> Removals { get; set; } = [];
+
+    /// <summary>
+    /// Stations that appear in the "Add craft" station picker. Empty = show all.
+    /// </summary>
+    [JsonPropertyName("visibleStations")]
+    public List<string> VisibleStations { get; set; } = [];
 }
 
 /// <summary>

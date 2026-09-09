@@ -1,0 +1,122 @@
+@inject RecipeService RecipeService
+
+<MudDialog>
+    <DialogContent>
+        <MudText Typo="Typo.body2" Class="mud-text-secondary mb-2">
+            Choose which stations appear in the <strong>Add craft</strong> station picker.
+            When all are checked the full list is shown.
+        </MudText>
+
+        <div class="d-flex gap-2 mb-3">
+            <MudButton Size="Size.Small" Variant="Variant.Text" Color="Color.Warning" OnClick="SelectAll">All</MudButton>
+            <MudButton Size="Size.Small" Variant="Variant.Text" Color="Color.Default" OnClick="SelectNone">None</MudButton>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px;">
+            @foreach (var entry in _entries)
+            {
+                var e = entry;
+                <div class="d-flex align-center gap-1 pa-1 hcm-station-setting-row"
+                     @onclick="() => e.Checked = !e.Checked"
+                     style="cursor:pointer;border-radius:4px;">
+                    <MudCheckBox @bind-Value="e.Checked"
+                                 Color="Color.Warning"
+                                 Dense="true"
+                                 StopClickPropagation="true" />
+                    @if (e.ImageUrl is not null)
+                    {
+                        <img src="@e.ImageUrl" alt=""
+                             style="width:18px;height:18px;object-fit:contain;flex-shrink:0;"
+                             onerror="this.style.display='none'" />
+                    }
+                    <MudText Typo="Typo.body2" Style="line-height:1.2;">@e.Label</MudText>
+                </div>
+            }
+        </div>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Warning" OnClick="Save">Save</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = null!;
+
+    private List<StationEntry> _entries = [];
+
+    protected override void OnInitialized()
+    {
+        // If the user has never saved a preference, default to stations that already
+        // have at least one recipe — a sensible starting point rather than everything.
+        var visible = RecipeService.Config.VisibleStations.Count > 0
+            ? new HashSet<string>(RecipeService.Config.VisibleStations)
+            : new HashSet<string>(RecipeService.GetCraftingAreaTypes());
+
+        _entries = RecipeService.AllStations.Select(name => new StationEntry
+        {
+            Name = name,
+            Label = PrettyStation(name),
+            ImageUrl = StationImage(name),
+            Checked = visible.Contains(name)
+        }).ToList();
+    }
+
+    private void SelectAll() { foreach (var e in _entries) e.Checked = true; }
+    private void SelectNone() { foreach (var e in _entries) e.Checked = false; }
+    private void Cancel() => MudDialog.Cancel();
+
+    private void Save()
+    {
+        var selected = _entries.Where(e => e.Checked).Select(e => e.Name).ToList();
+        RecipeService.SaveVisibleStations(selected);
+        MudDialog.Close();
+    }
+
+    private static string PrettyStation(string area) =>
+        System.Text.RegularExpressions.Regex.Replace(area, "(?<=[a-z])(?=[A-Z])", " ");
+
+    private static string? StationImage(string area)
+    {
+        var slug = area switch
+        {
+            "Vents" => "vents",
+            "Security" => "security",
+            "WaterCloset" => "lavatory",
+            "Stash" => "stash",
+            "Generator" => "generator",
+            "Heating" => "heating",
+            "WaterCollector" => "water-collector",
+            "MedStation" => "medstation",
+            "Kitchen" => "nutrition-unit",
+            "RestSpace" => "rest-space",
+            "Workbench" => "workbench",
+            "IntelligenceCenter" => "intelligence-center",
+            "ShootingRange" => "shooting-range",
+            "Library" => "library",
+            "ScavCase" => "scav-case",
+            "Illumination" or "ChristmasIllumination" => "illumination",
+            "AirFilteringUnit" => "air-filtering-unit",
+            "SolarPower" => "solar-power",
+            "BoozeGenerator" => "booze-generator",
+            "BitcoinFarm" => "bitcoin-farm",
+            "Gym" => "gym",
+            "WeaponStand" => "weapon-rack",
+            "CircleOfCultists" => "cultist-circle",
+            "HallOfFame" or "PlaceOfFame" => "hall-of-fame",
+            "GearRack" => "gear-rack",
+            "DefectiveWall" => "defective-wall",
+            _ => null
+        };
+        return slug is null ? null : $"https://assets.tarkov.dev/station-{slug}.png";
+    }
+
+    private class StationEntry
+    {
+        public string Name { get; set; } = "";
+        public string Label { get; set; } = "";
+        public string? ImageUrl { get; set; }
+        public bool Checked { get; set; }
+    }
+}

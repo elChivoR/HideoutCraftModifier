@@ -461,13 +461,10 @@
     private List<RequirementEntry> _editRequirements = [];
 
     private static readonly List<string> _allAreas =
-    [
-        "Vents", "Security", "WaterCloset", "Stash", "Generator", "Heating",
-        "WaterCollector", "MedStation", "Kitchen", "RestSpace", "Workbench",
-        "IntelligenceCenter", "ShootingRange", "Library", "ScavCase",
-        "Illumination", "AirFilteringUnit", "SolarPower", "BoozeGenerator",
-        "BitcoinFarm", "Gym", "WeaponStand", "CircleOfCultists"
-    ];
+        Enum.GetNames<HideoutAreas>()
+            .Where(n => n != "NotSet")
+            .OrderBy(n => n)
+            .ToList();
 
     // Recipes matching the station + search filters, before the Default/New tab split.
     // Drives the tab counters so they reflect what's currently in view.
@@ -726,7 +723,7 @@
         {
             Type = r.Type,
             TemplateId = r.Type is "Item" or "Tool" or "Resource" ? r.TemplateId : null,
-            AreaType = r.Type == "Area" ? (int?)Enum.Parse<SPTarkov.Server.Core.Models.Enums.Hideout.HideoutAreas>(r.AreaTypeStr ?? "Workbench") : null,
+            AreaType = r.Type == "Area" ? (int?)Enum.Parse<HideoutAreas>(r.AreaTypeStr ?? "Workbench") : null,
             RequiredLevel = r.Type == "Area" ? r.RequiredLevel : null,
             Count = r.Type == "Item" ? r.Count : null,
             IsFunctional = r.Type == "Tool" ? r.IsFunctional : null,

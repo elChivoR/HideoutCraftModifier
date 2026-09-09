@@ -37,6 +37,12 @@ public class RecipeService(
     // Used to restore deleted or modified recipes without a server restart.
     private Dictionary<string, HideoutProduction> _originalRecipes = [];
 
+    public static readonly List<string> AllStations =
+        Enum.GetNames<HideoutAreas>()
+            .Where(n => n != "NotSet")
+            .OrderBy(n => n)
+            .ToList();
+
     public ModConfig Config => _config;
 
     /// <summary>
@@ -112,6 +118,22 @@ public class RecipeService(
             .Distinct()
             .OrderBy(a => a)
             .ToList();
+    }
+
+    /// <summary>
+    /// Returns the stations that should appear in the "Add craft" station picker.
+    /// Empty visibleStations config means show all.
+    /// </summary>
+    public List<string> GetVisibleStations() =>
+        _config.VisibleStations.Count > 0 ? _config.VisibleStations : AllStations;
+
+    public void SaveVisibleStations(List<string> stations)
+    {
+        // If every station is checked, persist an empty list (= "show all") to keep config clean.
+        _config.VisibleStations = stations.Count == AllStations.Count
+            ? []
+            : [.. stations.OrderBy(s => s)];
+        SaveConfig();
     }
 
     public RecipeViewModel? GetRecipe(string recipeId)

@@ -1,4 +1,5 @@
 @inject UpdateCheckService UpdateCheck
+@inject IDialogService DialogService
 
 <HeadContent>
     <link href="/HideoutCraftModifier/css/hcm.css" rel="stylesheet" />
@@ -24,6 +25,14 @@
                         }
                     </div>
                     <MudText Typo="Typo.body2" Class="mud-text-secondary">Add, edit, or remove hideout crafting recipes</MudText>
+                </div>
+                <div style="margin-left:auto;">
+                    <MudTooltip Text="Station settings" Placement="Placement.Left" Arrow="true">
+                        <MudIconButton Icon="@Icons.Material.Filled.Settings"
+                                       Size="Size.Medium"
+                                       Color="Color.Default"
+                                       OnClick="OpenStationSettings" />
+                    </MudTooltip>
                 </div>
             </div>
         </MudPaper>
@@ -65,5 +74,11 @@
     protected override async Task OnInitializedAsync()
     {
         _update = await UpdateCheck.GetUpdateInfoAsync();
+    }
+
+    private async Task OpenStationSettings()
+    {
+        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true };
+        await DialogService.ShowAsync<StationSettingsDialog>("Station settings", options);
     }
 }
