@@ -6,10 +6,11 @@
 
 <PageTitle>HCM - Hideout Craft Modifier</PageTitle>
 
-<HcmLayout OnSettingsChanged="@OnStationSettingsChanged">
+<HcmLayout>
     <!-- Full-width station filter bar -->
     <MudPaper Elevation="0" Class="spt-panel hcm-station-bar pa-3 mb-4">
         <div class="hcm-station-carousel">
+            <!-- "All stations" card — no remove button -->
             <button type="button"
                     class="hcm-station-card @(_areaFilter is null ? "hcm-station-card--active" : "")"
                     @onclick="@(() => SelectStation(null))">
@@ -22,23 +23,63 @@
             {
                 var a = area;
                 var img = StationImage(a);
-                <button type="button"
-                        class="hcm-station-card @(_areaFilter == a ? "hcm-station-card--active" : "")"
-                        @onclick="@(() => SelectStation(a))">
-                    <span class="hcm-station-card__icon">
-                        @if (img is not null)
-                        {
-                            <img class="hcm-station-card__img"
-                                 src="@img"
-                                 alt="@PrettyStation(a)"
-                                 loading="lazy"
-                                 onerror="this.classList.add('hcm-img-broken')" />
-                        }
-                        <MudIcon Icon="@StationIcon(a)" Class="hcm-station-card__fallback" />
-                    </span>
-                    <span class="hcm-station-card__label">@PrettyStation(a)</span>
-                </button>
+                <div class="hcm-station-card-wrapper">
+                    <button type="button"
+                            class="hcm-station-card @(_areaFilter == a ? "hcm-station-card--active" : "")"
+                            @onclick="@(() => SelectStation(a))">
+                        <span class="hcm-station-card__icon">
+                            @if (img is not null)
+                            {
+                                <img class="hcm-station-card__img"
+                                     src="@img"
+                                     alt="@PrettyStation(a)"
+                                     loading="lazy"
+                                     onerror="this.classList.add('hcm-img-broken')" />
+                            }
+                            <MudIcon Icon="@StationIcon(a)" Class="hcm-station-card__fallback" />
+                        </span>
+                        <span class="hcm-station-card__label">@PrettyStation(a)</span>
+                    </button>
+                    <button type="button"
+                            class="hcm-station-card__remove"
+                            title="Remove @PrettyStation(a) from bar"
+                            @onclick="@(() => RemoveStation(a))"
+                            @onclick:stopPropagation="true">
+                        ×
+                    </button>
+                </div>
             }
+            <!-- Add station button -->
+            <div class="hcm-add-station-wrapper">
+                <button type="button"
+                        class="hcm-add-station-btn"
+                        title="Add station to bar"
+                        @onclick="ToggleAddStation">
+                    +
+                </button>
+                @if (_showAddStation)
+                {
+                    <div class="hcm-add-station-dropdown">
+                        @if (_hiddenStations.Count == 0)
+                        {
+                            <div class="hcm-add-station-empty">All stations visible</div>
+                        }
+                        else
+                        {
+                            @foreach (var s in _hiddenStations)
+                            {
+                                var station = s;
+                                <button type="button"
+                                        class="hcm-add-station-item"
+                                        @onclick="@(() => AddStation(station))">
+                                    @PrettyStation(station)
+                                </button>
+                            }
+                        }
+                    </div>
+                    <div class="hcm-add-station-backdrop" @onclick="CloseAddStation"></div>
+                }
+            </div>
         </div>
     </MudPaper>
 
@@ -444,6 +485,8 @@
     private string _recipeTab = "default"; // "default" = ships with SPT (incl. modified), "custom" = user-added, "removed" = deleted originals
     private string _recipeSort = "name"; // "name" | "station" | "time"
     private List<string> _availableAreas = [];
+    private List<string> _hiddenStations = [];
+    private bool _showAddStation;
     private RecipeViewModel? _selectedRecipe;
     private bool _selectedIsRemoved;
     private string _pristineSignature = ""; // form state as of the last SelectRecipe, for dirty tracking
@@ -529,15 +572,35 @@
     private void RefreshAvailableAreas()
     {
         _availableAreas = RecipeService.GetVisibleStations();
+        _hiddenStations = RecipeService.AllStations
+            .Except(_availableAreas)
+            .OrderBy(RecipeService.PrettyStation, StringComparer.OrdinalIgnoreCase)
+            .ToList();
         if (_areaFilter is not null && !_availableAreas.Contains(_areaFilter))
             _areaFilter = null;
     }
 
-    private void OnStationSettingsChanged()
+    private void AddStation(string area)
     {
+        _showAddStation = false;
+        var visible = RecipeService.GetVisibleStations();
+        if (!visible.Contains(area))
+            visible.Add(area);
+        RecipeService.SaveVisibleStations(visible);
         RefreshAvailableAreas();
-        StateHasChanged();
     }
+
+    private void RemoveStation(string area)
+    {
+        if (_areaFilter == area) _areaFilter = null;
+        var visible = RecipeService.GetVisibleStations();
+        visible.Remove(area);
+        RecipeService.SaveVisibleStations(visible);
+        RefreshAvailableAreas();
+    }
+
+    private void ToggleAddStation() => _showAddStation = !_showAddStation;
+    private void CloseAddStation() => _showAddStation = false;
 
     private void SelectRecipe(RecipeViewModel recipe, bool isRemoved = false)
     {
