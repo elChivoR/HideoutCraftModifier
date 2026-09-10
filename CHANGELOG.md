@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v1.6.0]
+
+### Added
+- Station filter bar: click the **+** card to open a station picker modal with images and icon fallbacks
+- Station filter bar: each station card now has an **×** button to remove it from the bar
+- Station bar is seeded automatically from stations that have at least one recipe on first run (no more empty bar after install)
+
+### Changed
+- Station names throughout the UI now use human-readable locale strings ("Intelligence Center" instead of "IntelligenceCenter")
+- Replaced the old station settings dialog with the inline add/remove UX directly on the bar
+- Add-station picker is now a modal grid instead of a dropdown (avoids clipping issues)
+
 ## [v1.5.0]
 
 ### Added
