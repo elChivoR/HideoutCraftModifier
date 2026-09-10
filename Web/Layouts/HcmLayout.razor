@@ -65,6 +65,9 @@
     [Parameter, EditorRequired]
     public RenderFragment? ChildContent { get; set; }
 
+    [Parameter]
+    public EventCallback OnSettingsChanged { get; set; }
+
     // Same version SPT shows in its mod list — sourced from ModMetadata, not hardcoded here.
     private static readonly string Version = $"v{new HideoutCraftModifier.ModMetadata().Version}";
 
@@ -79,6 +82,8 @@
     private async Task OpenStationSettings()
     {
         var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true };
-        await DialogService.ShowAsync<StationSettingsDialog>("Station settings", options);
+        var dialog = await DialogService.ShowAsync<StationSettingsDialog>("Station settings", options);
+        await dialog.Result;
+        await OnSettingsChanged.InvokeAsync();
     }
 }

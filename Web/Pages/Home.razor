@@ -6,7 +6,7 @@
 
 <PageTitle>HCM - Hideout Craft Modifier</PageTitle>
 
-<HcmLayout>
+<HcmLayout OnSettingsChanged="@OnStationSettingsChanged">
     <!-- Full-width station filter bar -->
     <MudPaper Elevation="0" Class="spt-panel hcm-station-bar pa-3 mb-4">
         <div class="hcm-station-carousel">
@@ -523,7 +523,20 @@
     {
         _recipes = RecipeService.GetAllRecipes();
         _removedRecipes = RecipeService.GetRemovedRecipes();
-        _availableAreas = _recipes.Select(r => r.AreaName).Distinct().OrderBy(a => a).ToList();
+        RefreshAvailableAreas();
+    }
+
+    private void RefreshAvailableAreas()
+    {
+        _availableAreas = RecipeService.GetVisibleStations();
+        if (_areaFilter is not null && !_availableAreas.Contains(_areaFilter))
+            _areaFilter = null;
+    }
+
+    private void OnStationSettingsChanged()
+    {
+        RefreshAvailableAreas();
+        StateHasChanged();
     }
 
     private void SelectRecipe(RecipeViewModel recipe, bool isRemoved = false)
