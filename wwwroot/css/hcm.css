@@ -224,19 +224,18 @@
     color: inherit;
 }
 
-/* Dropdown — positioned relative to the outer position:relative wrapper,
-   outside the overflow:auto carousel so it is never clipped */
+/* Dropdown — outside the overflow:auto carousel, inside the z-index:10 MudPaper */
 .hcm-add-station-backdrop {
     position: fixed;
     inset: 0;
-    z-index: 99;
+    z-index: 9;
 }
 
 .hcm-add-station-dropdown {
     position: absolute;
-    top: calc(100% + 4px);
-    left: 0;
-    z-index: 100;
+    top: calc(100% - 8px);
+    left: 8px;
+    z-index: 20;
     min-width: 180px;
     max-height: 240px;
     overflow-y: auto;
