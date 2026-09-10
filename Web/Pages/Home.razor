@@ -9,77 +9,80 @@
 <HcmLayout>
     <!-- Full-width station filter bar -->
     <MudPaper Elevation="0" Class="spt-panel hcm-station-bar pa-3 mb-4">
-        <div class="hcm-station-carousel">
-            <!-- "All stations" card — no remove button -->
-            <button type="button"
-                    class="hcm-station-card @(_areaFilter is null ? "hcm-station-card--active" : "")"
-                    @onclick="@(() => SelectStation(null))">
-                <span class="hcm-station-card__icon">
-                    <MudIcon Icon="@Icons.Material.Filled.GridView" />
-                </span>
-                <span class="hcm-station-card__label">All stations</span>
-            </button>
-            @foreach (var area in _availableAreas)
+        <div style="position:relative;">
+            <div class="hcm-station-carousel">
+                <!-- "All stations" card — no remove button -->
+                <button type="button"
+                        class="hcm-station-card @(_areaFilter is null ? "hcm-station-card--active" : "")"
+                        @onclick="@(() => SelectStation(null))">
+                    <span class="hcm-station-card__icon">
+                        <MudIcon Icon="@Icons.Material.Filled.GridView" />
+                    </span>
+                    <span class="hcm-station-card__label">All stations</span>
+                </button>
+                @foreach (var area in _availableAreas)
+                {
+                    var a = area;
+                    var img = StationImage(a);
+                    <div class="hcm-station-card-wrapper">
+                        <button type="button"
+                                class="hcm-station-card @(_areaFilter == a ? "hcm-station-card--active" : "")"
+                                @onclick="@(() => SelectStation(a))">
+                            <span class="hcm-station-card__icon">
+                                @if (img is not null)
+                                {
+                                    <img class="hcm-station-card__img"
+                                         src="@img"
+                                         alt="@PrettyStation(a)"
+                                         loading="lazy"
+                                         onerror="this.classList.add('hcm-img-broken')" />
+                                }
+                                <MudIcon Icon="@StationIcon(a)" Class="hcm-station-card__fallback" />
+                            </span>
+                            <span class="hcm-station-card__label">@PrettyStation(a)</span>
+                        </button>
+                        <button type="button"
+                                class="hcm-station-card__remove"
+                                title="Remove @PrettyStation(a) from bar"
+                                @onclick="@(() => RemoveStation(a))"
+                                @onclick:stopPropagation="true">
+                            ×
+                        </button>
+                    </div>
+                }
+                <!-- "+" add station card — same shape as station cards -->
+                <button type="button"
+                        class="hcm-station-card hcm-add-station-card"
+                        @onclick="ToggleAddStation">
+                    <span class="hcm-station-card__icon">
+                        <span class="hcm-add-station-plus">+</span>
+                    </span>
+                    <span class="hcm-station-card__label">Add station</span>
+                </button>
+            </div>
+            <!-- Dropdown rendered OUTSIDE the overflow:auto carousel so it isn't clipped -->
+            @if (_showAddStation)
             {
-                var a = area;
-                var img = StationImage(a);
-                <div class="hcm-station-card-wrapper">
-                    <button type="button"
-                            class="hcm-station-card @(_areaFilter == a ? "hcm-station-card--active" : "")"
-                            @onclick="@(() => SelectStation(a))">
-                        <span class="hcm-station-card__icon">
-                            @if (img is not null)
-                            {
-                                <img class="hcm-station-card__img"
-                                     src="@img"
-                                     alt="@PrettyStation(a)"
-                                     loading="lazy"
-                                     onerror="this.classList.add('hcm-img-broken')" />
-                            }
-                            <MudIcon Icon="@StationIcon(a)" Class="hcm-station-card__fallback" />
-                        </span>
-                        <span class="hcm-station-card__label">@PrettyStation(a)</span>
-                    </button>
-                    <button type="button"
-                            class="hcm-station-card__remove"
-                            title="Remove @PrettyStation(a) from bar"
-                            @onclick="@(() => RemoveStation(a))"
-                            @onclick:stopPropagation="true">
-                        ×
-                    </button>
+                <div class="hcm-add-station-backdrop" @onclick="CloseAddStation"></div>
+                <div class="hcm-add-station-dropdown">
+                    @if (_hiddenStations.Count == 0)
+                    {
+                        <div class="hcm-add-station-empty">All stations visible</div>
+                    }
+                    else
+                    {
+                        @foreach (var s in _hiddenStations)
+                        {
+                            var station = s;
+                            <button type="button"
+                                    class="hcm-add-station-item"
+                                    @onclick="@(() => AddStation(station))">
+                                @PrettyStation(station)
+                            </button>
+                        }
+                    }
                 </div>
             }
-            <!-- Add station button -->
-            <div class="hcm-add-station-wrapper">
-                <button type="button"
-                        class="hcm-add-station-btn"
-                        title="Add station to bar"
-                        @onclick="ToggleAddStation">
-                    +
-                </button>
-                @if (_showAddStation)
-                {
-                    <div class="hcm-add-station-dropdown">
-                        @if (_hiddenStations.Count == 0)
-                        {
-                            <div class="hcm-add-station-empty">All stations visible</div>
-                        }
-                        else
-                        {
-                            @foreach (var s in _hiddenStations)
-                            {
-                                var station = s;
-                                <button type="button"
-                                        class="hcm-add-station-item"
-                                        @onclick="@(() => AddStation(station))">
-                                    @PrettyStation(station)
-                                </button>
-                            }
-                        }
-                    </div>
-                    <div class="hcm-add-station-backdrop" @onclick="CloseAddStation"></div>
-                }
-            </div>
         </div>
     </MudPaper>
 
