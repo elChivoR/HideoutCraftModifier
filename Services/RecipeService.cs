@@ -102,6 +102,20 @@ public class RecipeService(
                 r => jsonUtil.Deserialize<HideoutProduction>(jsonUtil.Serialize(r))!)
             ?? [];
         ApplyConfig();
+
+        // First-run (or upgrade from a version without visibleStations): seed from
+        // stations that actually have at least one recipe so the bar isn't overwhelming.
+        if (_config.VisibleStations.Count == 0)
+        {
+            _config.VisibleStations = hideoutTable.Production.Recipes?
+                .Where(r => r.AreaType.HasValue)
+                .Select(r => r.AreaType!.Value.ToString())
+                .Where(AllStations.Contains)
+                .Distinct()
+                .OrderBy(a => a)
+                .ToList() ?? [.. AllStations];
+            SaveConfig();
+        }
     }
 
     /// <summary>
@@ -154,18 +168,14 @@ public class RecipeService(
     }
 
     /// <summary>
-    /// Returns the stations that should appear in the "Add craft" station picker.
-    /// Empty visibleStations config means show all.
+    /// Returns the stations that should appear in the station bar.
+    /// Always populated after Initialize() runs (seeded from stations-with-recipes on first run).
     /// </summary>
-    public List<string> GetVisibleStations() =>
-        _config.VisibleStations.Count > 0 ? _config.VisibleStations : AllStations;
+    public List<string> GetVisibleStations() => [.. _config.VisibleStations];
 
     public void SaveVisibleStations(List<string> stations)
     {
-        // If every station is checked, persist an empty list (= "show all") to keep config clean.
-        _config.VisibleStations = stations.Count == AllStations.Count
-            ? []
-            : [.. stations.OrderBy(s => s)];
+        _config.VisibleStations = [.. stations.OrderBy(s => s)];
         SaveConfig();
     }
 

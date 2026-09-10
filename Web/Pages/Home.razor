@@ -9,7 +9,7 @@
 <HcmLayout>
     <!-- Full-width station filter bar -->
     <!-- position:relative + z-index:10 creates a stacking context above the sticky list panel -->
-    <MudPaper Elevation="0" Class="spt-panel hcm-station-bar pa-3 mb-4" Style="position:relative;z-index:10;">
+    <MudPaper Elevation="0" Class="spt-panel hcm-station-bar pa-3 mb-4">
         <div class="hcm-station-carousel">
             <!-- "All stations" card — no remove button -->
             <button type="button"
@@ -53,33 +53,13 @@
             <!-- "+" add station card -->
             <button type="button"
                     class="hcm-station-card hcm-add-station-card"
-                    @onclick="ToggleAddStation">
+                    @onclick="OpenAddStationDialog">
                 <span class="hcm-station-card__icon">
                     <span class="hcm-add-station-plus">+</span>
                 </span>
                 <span class="hcm-station-card__label">Add station</span>
             </button>
         </div>
-        <!-- Dropdown outside the overflow:auto carousel but inside the z-index:10 MudPaper -->
-        @if (_showAddStation)
-        {
-            <div class="hcm-add-station-backdrop" @onclick="CloseAddStation"></div>
-            <div class="hcm-add-station-dropdown">
-                @if (_hiddenStations.Count == 0)
-                {
-                    <div class="hcm-add-station-empty">All stations visible</div>
-                }
-                @foreach (var s in _hiddenStations)
-                {
-                    var station = s;
-                    <button type="button"
-                            class="hcm-add-station-item"
-                            @onclick="@(() => AddStation(station))">
-                        @PrettyStation(station)
-                    </button>
-                }
-            </div>
-        }
     </MudPaper>
 
     <div style="display:flex;gap:16px;align-items:flex-start;">
@@ -485,7 +465,6 @@
     private string _recipeSort = "name"; // "name" | "station" | "time"
     private List<string> _availableAreas = [];
     private List<string> _hiddenStations = [];
-    private bool _showAddStation;
     private RecipeViewModel? _selectedRecipe;
     private bool _selectedIsRemoved;
     private string _pristineSignature = ""; // form state as of the last SelectRecipe, for dirty tracking
@@ -579,12 +558,23 @@
             _areaFilter = null;
     }
 
-    private void ToggleAddStation() => _showAddStation = !_showAddStation;
-    private void CloseAddStation() => _showAddStation = false;
+    private async Task OpenAddStationDialog()
+    {
+        var parameters = new DialogParameters
+        {
+            { "HiddenStations", _hiddenStations },
+            { "GetImage", (Func<string, string?>)StationImage },
+            { "GetIcon",  (Func<string, string>)StationIcon  }
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, NoHeader = true };
+        var dialog = await DialogService.ShowAsync<AddStationDialog>("Add station", parameters, options);
+        var result = await dialog.Result;
+        if (result is { Canceled: false, Data: string station })
+            AddStation(station);
+    }
 
     private void AddStation(string area)
     {
-        _showAddStation = false;
         var visible = RecipeService.GetVisibleStations();
         if (!visible.Contains(area))
             visible.Add(area);

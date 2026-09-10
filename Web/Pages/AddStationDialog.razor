@@ -1,0 +1,56 @@
+<MudDialog>
+    <DialogContent>
+        <div class="hcm-add-station-modal">
+            <div class="hcm-add-station-modal__header">
+                <MudIcon Icon="@Icons.Material.Filled.Add" Class="hcm-add-station-modal__header-icon" />
+                <MudText Typo="Typo.h6">Add station</MudText>
+                <button class="hcm-add-station-modal__close" @onclick="@(() => MudDialog.Cancel())" aria-label="Close">×</button>
+            </div>
+
+            @if (HiddenStations.Count == 0)
+            {
+                <div class="hcm-add-station-modal__empty">
+                    <MudIcon Icon="@Icons.Material.Filled.CheckCircleOutline" Style="font-size:40px;color:rgba(250,204,21,0.5);" />
+                    <MudText Typo="Typo.body2" Class="mud-text-secondary">All stations are already visible in the bar.</MudText>
+                </div>
+            }
+            else
+            {
+                <MudText Typo="Typo.caption" Class="mud-text-secondary mb-3" Style="display:block;">
+                    Select a station to add it to the filter bar.
+                </MudText>
+                <div class="hcm-add-station-grid">
+                    @foreach (var area in HiddenStations)
+                    {
+                        var a = area;
+                        var img = GetImage?.Invoke(a);
+                        var icon = GetIcon?.Invoke(a) ?? Icons.Material.Filled.Category;
+                        <button type="button" class="hcm-add-station-pick" @onclick="@(() => MudDialog.Close(DialogResult.Ok(a)))">
+                            <span class="hcm-add-station-pick__icon">
+                                @if (img is not null)
+                                {
+                                    <img src="@img"
+                                         alt="@PrettyStation(a)"
+                                         class="hcm-add-station-pick__img"
+                                         loading="lazy"
+                                         onerror="this.classList.add('hcm-img-broken')" />
+                                }
+                                <MudIcon Icon="@icon" Class="hcm-station-card__fallback" Style="font-size:28px;" />
+                            </span>
+                            <span class="hcm-add-station-pick__label">@PrettyStation(a)</span>
+                        </button>
+                    }
+                </div>
+            }
+        </div>
+    </DialogContent>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = null!;
+    [Parameter] public List<string> HiddenStations { get; set; } = [];
+    [Parameter] public Func<string, string?>? GetImage { get; set; }
+    [Parameter] public Func<string, string>? GetIcon  { get; set; }
+
+    private static string PrettyStation(string area) => RecipeService.PrettyStation(area);
+}
