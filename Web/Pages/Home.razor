@@ -610,9 +610,7 @@
 
     private void SelectStation(string? area) => _areaFilter = area;
 
-    // "BitcoinFarm" -> "Bitcoin Farm"
-    private static string PrettyStation(string area) =>
-        System.Text.RegularExpressions.Regex.Replace(area, "(?<=[a-z])(?=[A-Z])", " ");
+    private static string PrettyStation(string area) => RecipeService.PrettyStation(area);
 
     // Real station art from tarkov.dev's CDN. Maps SPT's HideoutAreas enum names to
     // tarkov.dev slugs (some differ: WaterCloset=lavatory, Kitchen=nutrition-unit,
@@ -637,18 +635,18 @@
             "Library" => "library",
             "ScavCase" => "scav-case",
             "Illumination" => "illumination",
-            "ChristmasIllumination" => "illumination",
+            "ChristmasIllumination" => "christmas-tree",
+            "PlaceOfFame" => "hall-of-fame",
             "AirFilteringUnit" => "air-filtering-unit",
             "SolarPower" => "solar-power",
             "BoozeGenerator" => "booze-generator",
             "BitcoinFarm" => "bitcoin-farm",
+            "EmergencyWall" => "defective-wall",
             "Gym" => "gym",
             "WeaponStand" => "weapon-rack",
+            "WeaponStandSecondary" => "weapon-rack",
+            "EquipmentPresetsStand" => "gear-rack",
             "CircleOfCultists" => "cultist-circle",
-            "HallOfFame" => "hall-of-fame",
-            "PlaceOfFame" => "hall-of-fame",
-            "GearRack" => "gear-rack",
-            "DefectiveWall" => "defective-wall",
             _ => null
         };
         return slug is null ? null : $"https://assets.tarkov.dev/station-{slug}.png";

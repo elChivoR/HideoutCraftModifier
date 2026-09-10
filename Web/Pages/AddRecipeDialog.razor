@@ -7,7 +7,7 @@
                          Placeholder="Select a station..."
                          @bind-Value="_areaType"
                          SearchFunc="SearchStations"
-                         ToStringFunc="PrettyStation"
+                         ToStringFunc="RecipeService.PrettyStation"
                          Variant="Variant.Outlined"
                          Margin="Margin.Dense"
                          Class="mb-3"
@@ -81,12 +81,9 @@
     {
         IEnumerable<string> results = string.IsNullOrWhiteSpace(query)
             ? _areas
-            : _areas.Where(a => PrettyStation(a).Contains(query, StringComparison.OrdinalIgnoreCase));
+            : _areas.Where(a => RecipeService.PrettyStation(a).Contains(query, StringComparison.OrdinalIgnoreCase));
         return Task.FromResult(results);
     }
-
-    private static string PrettyStation(string? area) =>
-        area is null ? "" : System.Text.RegularExpressions.Regex.Replace(area, "(?<=[a-z])(?=[A-Z])", " ");
 
     private static string FormatTime(double seconds)
     {

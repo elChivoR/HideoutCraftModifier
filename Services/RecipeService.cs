@@ -39,9 +39,42 @@ public class RecipeService(
 
     public static readonly List<string> AllStations =
         Enum.GetNames<HideoutAreas>()
-            .Where(n => n != "NotSet")
+            .Where(n => n != "NotSet" && n != "EmergencyWall")
             .OrderBy(n => n)
             .ToList();
+
+    public static string PrettyStation(string? area) => area switch
+    {
+        "Vents"                 => "Vents",
+        "Security"              => "Security",
+        "WaterCloset"           => "Lavatory",
+        "Stash"                 => "Stash",
+        "Generator"             => "Generator",
+        "Heating"               => "Heating",
+        "WaterCollector"        => "Water Collector",
+        "MedStation"            => "Medstation",
+        "Kitchen"               => "Nutrition Unit",
+        "RestSpace"             => "Rest Space",
+        "Workbench"             => "Workbench",
+        "IntelligenceCenter"    => "Intelligence Center",
+        "ShootingRange"         => "Shooting Range",
+        "Library"               => "Library",
+        "ScavCase"              => "Scav Case",
+        "Illumination"          => "Illumination",
+        "PlaceOfFame"           => "Hall of Fame",
+        "AirFilteringUnit"      => "Air Filtering Unit",
+        "SolarPower"            => "Solar Power",
+        "BoozeGenerator"        => "Booze Generator",
+        "BitcoinFarm"           => "Bitcoin Farm",
+        "ChristmasIllumination" => "Christmas Tree",
+        "EmergencyWall"         => "Defective Wall",
+        "Gym"                   => "Gym",
+        "WeaponStand"           => "Weapon Rack",
+        "WeaponStandSecondary"  => "Weapon Rack (2nd)",
+        "EquipmentPresetsStand" => "Gear Rack",
+        "CircleOfCultists"      => "Cultist Circle",
+        _                       => System.Text.RegularExpressions.Regex.Replace(area ?? "", "(?<=[a-z])(?=[A-Z])", " ")
+    };
 
     public ModConfig Config => _config;
 
@@ -194,12 +227,15 @@ public class RecipeService(
     /// </summary>
     public string AddRecipe(RecipeAddition addition)
     {
+        if (!Enum.TryParse<HideoutAreas>(addition.AreaType, out var areaType))
+            throw new ArgumentException($"Unknown areaType '{addition.AreaType}'");
+
         var recipeId = new MongoId();
         addition.Id = (string)recipeId;
         var recipe = new HideoutProduction
         {
             Id = recipeId,
-            AreaType = Enum.Parse<HideoutAreas>(addition.AreaType),
+            AreaType = areaType,
             ProductionTime = addition.ProductionTime,
             EndProduct = new MongoId(addition.EndProduct),
             Count = addition.Count,
@@ -376,6 +412,11 @@ public class RecipeService(
         var needsSave = false;
         foreach (var addition in _config.Additions)
         {
+            if (!Enum.TryParse<HideoutAreas>(addition.AreaType, out var areaType))
+            {
+                logger.Warning($"[HCM] Skipping addition with unknown areaType '{addition.AreaType}' — remove it from config.json");
+                continue;
+            }
             if (string.IsNullOrEmpty(addition.Id))
             {
                 addition.Id = (string)new MongoId();
@@ -384,7 +425,7 @@ public class RecipeService(
             var recipe = new HideoutProduction
             {
                 Id = new MongoId(addition.Id),
-                AreaType = Enum.Parse<HideoutAreas>(addition.AreaType),
+                AreaType = areaType,
                 ProductionTime = addition.ProductionTime,
                 EndProduct = new MongoId(addition.EndProduct),
                 Count = addition.Count,
