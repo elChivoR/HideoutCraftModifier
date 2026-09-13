@@ -177,7 +177,7 @@
                                    Margin="Margin.Dense"
                                    Dense="true"
                                    Style="flex:1;">
-                            @foreach (var area in _allAreas)
+                            @foreach (var area in _availableAreas)
                             {
                                 <MudSelectItem Value="@area">@PrettyStation(area)</MudSelectItem>
                             }
