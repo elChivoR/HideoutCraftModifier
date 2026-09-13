@@ -792,7 +792,7 @@
             _selectedRecipe = null;
             LoadRecipes();
             if (hasOriginals) _recipeTab = "removed";
-            Snackbar.Add($"{count} recipe{(count == 1 ? "" : "s")} removed.", Severity.Warning);
+            Snackbar.Add($"{count} recipe{(count == 1 ? "" : "s")} removed.", Severity.Error);
         }
     }
 
@@ -988,7 +988,7 @@
             RecipeService.RemoveRecipe(recipe.Id);
             _selectedRecipe = null;
             LoadRecipes();
-            Snackbar.Add("Recipe removed!", Severity.Warning);
+            Snackbar.Add("Recipe removed!", Severity.Error);
         }
     }
 
