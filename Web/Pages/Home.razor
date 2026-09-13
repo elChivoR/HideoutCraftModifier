@@ -95,7 +95,13 @@
                     <button type="button"
                             class="@(_recipeTab == "removed" ? "active" : "")"
                             @onclick='() => SwitchTab("removed")'>
-                        Removed <span class="hcm-tab-count">@removedCount</span>
+                        Removed
+                        <MudTooltip Text="Shows removed recipes. SPT originals can always be restored here. Custom recipes currently cannot be recovered once deleted."
+                                    Arrow="true"
+                                    Placement="Placement.Top">
+                            <MudIcon Icon="@Icons.Material.Outlined.Info" Style="font-size:13px;opacity:0.55;vertical-align:middle;margin-bottom:1px;" />
+                        </MudTooltip>
+                        <span class="hcm-tab-count">@removedCount</span>
                     </button>
                 </div>
 
@@ -191,6 +197,15 @@
                             Clone
                         </MudButton>
                     </div>
+                    <MudButton Variant="Variant.Outlined"
+                               Color="Color.Error"
+                               Size="Size.Small"
+                               FullWidth="true"
+                               StartIcon="@Icons.Material.Filled.DeleteOutline"
+                               Disabled="@(_checkedRecipeIds.Count == 0)"
+                               OnClick="DeleteBatch">
+                        Delete selected (@_checkedRecipeIds.Count)
+                    </MudButton>
                 </div>
             }
         </MudPaper>
@@ -751,6 +766,34 @@
         LoadRecipes();
         _recipeTab = "custom";
         Snackbar.Add($"{count} recipe{(count == 1 ? "" : "s")} cloned to {PrettyStation(_cloneTargetArea)}!", Severity.Success);
+    }
+
+    private async Task DeleteBatch()
+    {
+        if (_checkedRecipeIds.Count == 0) return;
+
+        var count = _checkedRecipeIds.Count;
+        var parameters = new DialogParameters
+        {
+            { "ContentText", $"Remove {count} selected recipe{(count == 1 ? "" : "s")}? This cannot be undone for custom recipes." },
+            { "ButtonText", "Delete" },
+            { "Color", Color.Error }
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.ExtraSmall };
+        var dialog = await DialogService.ShowAsync<ConfirmDialog>("Delete recipes", parameters, options);
+        var result = await dialog.Result;
+        if (result is { Canceled: false })
+        {
+            var ids = _checkedRecipeIds.ToList();
+            var hasOriginals = _recipes.Any(r => ids.Contains(r.Id) && !r.IsCustom);
+            ExitMultiSelectMode();
+            foreach (var id in ids)
+                RecipeService.RemoveRecipe(id);
+            _selectedRecipe = null;
+            LoadRecipes();
+            if (hasOriginals) _recipeTab = "removed";
+            Snackbar.Add($"{count} recipe{(count == 1 ? "" : "s")} removed.", Severity.Warning);
+        }
     }
 
     private async Task SwitchTab(string tab)
