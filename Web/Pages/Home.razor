@@ -110,24 +110,42 @@
                         <MudSelectItem Value="@("station")">Station</MudSelectItem>
                         <MudSelectItem Value="@("time")">Time (fastest first)</MudSelectItem>
                     </MudSelect>
-                    <MudButton Variant="Variant.Outlined"
-                               Color="Color.Warning"
-                               Size="Size.Small"
-                               StartIcon="@Icons.Material.Filled.Add"
-                               OnClick="OpenAddRecipeDialog">
-                        Add craft
-                    </MudButton>
+                    <div class="d-flex gap-1">
+                        @if (_recipeTab != "removed")
+                        {
+                            <MudButton Variant="@(_multiSelectMode ? Variant.Filled : Variant.Outlined)"
+                                       Color="Color.Info"
+                                       Size="Size.Small"
+                                       StartIcon="@Icons.Material.Filled.Checklist"
+                                       OnClick="ToggleMultiSelectMode">
+                                Select
+                            </MudButton>
+                        }
+                        <MudButton Variant="Variant.Outlined"
+                                   Color="Color.Warning"
+                                   Size="Size.Small"
+                                   StartIcon="@Icons.Material.Filled.Add"
+                                   OnClick="OpenAddRecipeDialog">
+                            Add craft
+                        </MudButton>
+                    </div>
                 </div>
             </div>
 
-            <div style="flex:1;overflow-y:auto;min-height:0;">
+            <div style="flex:1;overflow-y:auto;min-height:0;position:relative;">
                 @foreach (var recipe in FilteredRecipes)
                 {
                     var isSelected = _selectedRecipe?.Id == recipe.Id;
                     var isRemovedTab = _recipeTab == "removed";
-                    <div class="hcm-recipe-item @(isSelected ? "hcm-recipe-selected" : "")"
-                         @onclick="() => TrySelectRecipe(recipe, isRemovedTab)">
+                    var isChecked = _multiSelectMode && !isRemovedTab && _checkedRecipeIds.Contains(recipe.Id);
+                    var isHighlighted = _multiSelectMode && !isRemovedTab ? isChecked : isSelected;
+                    <div class="hcm-recipe-item @(isHighlighted ? "hcm-recipe-selected" : "")"
+                         @onclick="() => HandleRecipeItemClick(recipe, isRemovedTab)">
                         <div class="d-flex align-center gap-2">
+                            @if (_multiSelectMode && !isRemovedTab)
+                            {
+                                <MudCheckbox T="bool" Value="isChecked" ReadOnly="true" Dense="true" Color="Color.Info" Style="margin:0;padding:0;" />
+                            }
                             <img src="@IconUrl(recipe.EndProductId)" alt="" class="hcm-list-icon" loading="lazy" />
                             <div class="flex-grow-1" style="min-width:0;">
                                 <div class="d-flex align-center gap-1">
@@ -144,6 +162,37 @@
                     </div>
                 }
             </div>
+
+            @if (_multiSelectMode)
+            {
+                <div style="flex-shrink:0;padding:10px 12px;border-top:1px solid rgba(255,255,255,0.1);display:flex;flex-direction:column;gap:8px;">
+                    <div class="d-flex align-center justify-space-between">
+                        <MudText Typo="Typo.body2" Style="font-weight:500;">@_checkedRecipeIds.Count selected</MudText>
+                        <MudButton Variant="Variant.Text" Color="Color.Default" Size="Size.Small" Class="hcm-cancel-btn" OnClick="ExitMultiSelectMode">Cancel</MudButton>
+                    </div>
+                    <div class="d-flex gap-2 align-center">
+                        <MudSelect T="string" @bind-Value="_cloneTargetArea"
+                                   Label="Clone to station"
+                                   Variant="Variant.Outlined"
+                                   Margin="Margin.Dense"
+                                   Dense="true"
+                                   Style="flex:1;">
+                            @foreach (var area in _allAreas)
+                            {
+                                <MudSelectItem Value="@area">@PrettyStation(area)</MudSelectItem>
+                            }
+                        </MudSelect>
+                        <MudButton Variant="Variant.Filled"
+                                   Color="Color.Info"
+                                   Size="Size.Small"
+                                   StartIcon="@Icons.Material.Filled.ContentCopy"
+                                   Disabled="@(_checkedRecipeIds.Count == 0 || string.IsNullOrEmpty(_cloneTargetArea))"
+                                   OnClick="CloneBatch">
+                            Clone
+                        </MudButton>
+                    </div>
+                </div>
+            }
         </MudPaper>
 
         <!-- Right Panel: Detail/Edit -->
@@ -481,6 +530,10 @@
     private bool _editIsCodeProduction;
     private List<RequirementEntry> _editRequirements = [];
 
+    private bool _multiSelectMode;
+    private HashSet<string> _checkedRecipeIds = [];
+    private string _cloneTargetArea = "";
+
     private static readonly List<string> _allAreas =
         Enum.GetNames<HideoutAreas>()
             .Where(n => n != "NotSet")
@@ -661,6 +714,43 @@
         if (recipe.Id == _selectedRecipe?.Id) return;
         if (!await ConfirmDiscardIfDirty()) return;
         SelectRecipe(recipe, isRemoved);
+    }
+
+    private async Task HandleRecipeItemClick(RecipeViewModel recipe, bool isRemovedTab)
+    {
+        if (_multiSelectMode && !isRemovedTab)
+            ToggleRecipeCheck(recipe.Id);
+        else
+            await TrySelectRecipe(recipe, isRemovedTab);
+    }
+
+    private void ToggleRecipeCheck(string recipeId)
+    {
+        if (!_checkedRecipeIds.Remove(recipeId))
+            _checkedRecipeIds.Add(recipeId);
+    }
+
+    private void ToggleMultiSelectMode()
+    {
+        _multiSelectMode = !_multiSelectMode;
+        if (!_multiSelectMode)
+            _checkedRecipeIds.Clear();
+    }
+
+    private void ExitMultiSelectMode()
+    {
+        _multiSelectMode = false;
+        _checkedRecipeIds.Clear();
+    }
+
+    private void CloneBatch()
+    {
+        if (_checkedRecipeIds.Count == 0 || string.IsNullOrEmpty(_cloneTargetArea)) return;
+        var count = RecipeService.CloneRecipes(_checkedRecipeIds, _cloneTargetArea);
+        ExitMultiSelectMode();
+        LoadRecipes();
+        _recipeTab = "custom";
+        Snackbar.Add($"{count} recipe{(count == 1 ? "" : "s")} cloned to {PrettyStation(_cloneTargetArea)}!", Severity.Success);
     }
 
     private async Task SwitchTab(string tab)

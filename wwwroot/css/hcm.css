@@ -606,6 +606,11 @@
     box-shadow: 0 -8px 16px -8px rgba(0, 0, 0, 0.55);
 }
 
+/* Cancel button in the batch-clone action bar turns red on hover */
+.hcm-cancel-btn:hover {
+    color: var(--mud-palette-error, #f44336) !important;
+}
+
 /* Standardize width for all MudBlazor inputs in flex rows */
 .hcm-section .d-flex > .mud-autocomplete,
 .hcm-section .d-flex > .mud-input-control {

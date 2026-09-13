@@ -307,6 +307,46 @@ public class RecipeService(
         _config.Modifications.Any(m => m.RecipeId == recipeId);
 
     /// <summary>
+    /// Clones a set of recipes to a different hideout station by creating new additions.
+    /// Returns the number of recipes successfully cloned.
+    /// </summary>
+    public int CloneRecipes(IEnumerable<string> recipeIds, string targetAreaType)
+    {
+        var count = 0;
+        foreach (var recipeId in recipeIds)
+        {
+            var vm = GetRecipe(recipeId);
+            if (vm is null) continue;
+            AddRecipe(new RecipeAddition
+            {
+                AreaType = targetAreaType,
+                EndProduct = vm.EndProductId,
+                ProductionTime = vm.ProductionTime,
+                Count = vm.Count,
+                ProductionLimitCount = vm.ProductionLimitCount,
+                Locked = vm.Locked,
+                Continuous = vm.Continuous,
+                NeedFuelForAllProductionTime = vm.NeedFuelForAllProductionTime,
+                IsEncoded = vm.IsEncoded,
+                IsCodeProduction = vm.IsCodeProduction,
+                Requirements = vm.Requirements.Select(r => new RequirementConfig
+                {
+                    Type = r.Type,
+                    TemplateId = r.TemplateId,
+                    AreaType = r.AreaType,
+                    RequiredLevel = r.RequiredLevel,
+                    Count = r.Count,
+                    IsFunctional = r.IsFunctional,
+                    QuestId = r.QuestId,
+                    Resource = r.Resource
+                }).ToList()
+            });
+            count++;
+        }
+        return count;
+    }
+
+    /// <summary>
     /// Returns ViewModels for all original SPT recipes that the user has deleted,
     /// so the UI can display and restore them.
     /// </summary>
