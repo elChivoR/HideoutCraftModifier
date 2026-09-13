@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v1.7.0]
+
+### Added
+- **Batch clone:** activate multi-select mode with the new *Select* button to pick multiple recipes and clone them all to another station in one click
+- **Batch delete:** delete multiple selected recipes at once from the same multi-select action bar
+- After batch-deleting SPT original recipes, the UI automatically switches to the *Removed* tab so they can be reviewed or restored
+- Info tooltip on the *Removed* tab explaining what appears there and the restore behaviour
+
+### Fixed
+- *Clone to station* dropdown now only lists stations visible in your station bar (consistent with the rest of the UI)
+- Delete toast notifications now use a red (Error) style instead of yellow (Warning) for better readability
+
 ## [v1.6.0]
 
 ### Added
