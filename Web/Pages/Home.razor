@@ -127,6 +127,17 @@
                                 Select
                             </MudButton>
                         }
+                        else
+                        {
+                            <MudButton Variant="@(_removedMultiSelectMode ? Variant.Filled : Variant.Outlined)"
+                                       Color="Color.Info"
+                                       Size="Size.Small"
+                                       StartIcon="@Icons.Material.Filled.Checklist"
+                                       Disabled="@(_removedRecipes.Count == 0)"
+                                       OnClick="ToggleRemovedMultiSelectMode">
+                                Select
+                            </MudButton>
+                        }
                         <MudButton Variant="Variant.Outlined"
                                    Color="Color.Warning"
                                    Size="Size.Small"
@@ -143,12 +154,13 @@
                 {
                     var isSelected = _selectedRecipe?.Id == recipe.Id;
                     var isRemovedTab = _recipeTab == "removed";
-                    var isChecked = _multiSelectMode && !isRemovedTab && _checkedRecipeIds.Contains(recipe.Id);
-                    var isHighlighted = _multiSelectMode && !isRemovedTab ? isChecked : isSelected;
+                    var isChecked = _multiSelectMode && !isRemovedTab ? _checkedRecipeIds.Contains(recipe.Id)
+                                  : _removedMultiSelectMode && isRemovedTab && _checkedRemovedIds.Contains(recipe.Id);
+                    var isHighlighted = (_multiSelectMode && !isRemovedTab) || (_removedMultiSelectMode && isRemovedTab) ? isChecked : isSelected;
                     <div class="hcm-recipe-item @(isHighlighted ? "hcm-recipe-selected" : "")"
                          @onclick="() => HandleRecipeItemClick(recipe, isRemovedTab)">
                         <div class="d-flex align-center gap-2">
-                            @if (_multiSelectMode && !isRemovedTab)
+                            @if ((_multiSelectMode && !isRemovedTab) || (_removedMultiSelectMode && isRemovedTab))
                             {
                                 <MudCheckbox T="bool" Value="isChecked" ReadOnly="true" Dense="true" Color="Color.Info" Style="margin:0;padding:0;" />
                             }
@@ -205,6 +217,32 @@
                                Disabled="@(_checkedRecipeIds.Count == 0)"
                                OnClick="DeleteBatch">
                         Delete selected (@_checkedRecipeIds.Count)
+                    </MudButton>
+                </div>
+            }
+            @if (_removedMultiSelectMode)
+            {
+                <div style="flex-shrink:0;padding:10px 12px;border-top:1px solid rgba(255,255,255,0.1);display:flex;flex-direction:column;gap:8px;">
+                    <div class="d-flex align-center justify-space-between">
+                        <MudText Typo="Typo.body2" Style="font-weight:500;">@_checkedRemovedIds.Count selected</MudText>
+                        <MudButton Variant="Variant.Text" Color="Color.Default" Size="Size.Small" Class="hcm-cancel-btn" OnClick="ExitRemovedMultiSelectMode">Cancel</MudButton>
+                    </div>
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Info"
+                               Size="Size.Small"
+                               FullWidth="true"
+                               StartIcon="@Icons.Material.Filled.RestoreFromTrash"
+                               Disabled="@(_checkedRemovedIds.Count == 0)"
+                               OnClick="RestoreBatch">
+                        Restore selected (@_checkedRemovedIds.Count)
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined"
+                               Color="Color.Info"
+                               Size="Size.Small"
+                               FullWidth="true"
+                               StartIcon="@Icons.Material.Filled.RestoreFromTrash"
+                               OnClick="RestoreAllBatch">
+                        Restore all (@_removedRecipes.Count)
                     </MudButton>
                 </div>
             }
@@ -549,6 +587,9 @@
     private HashSet<string> _checkedRecipeIds = [];
     private string _cloneTargetArea = "";
 
+    private bool _removedMultiSelectMode;
+    private HashSet<string> _checkedRemovedIds = [];
+
     private static readonly List<string> _allAreas =
         Enum.GetNames<HideoutAreas>()
             .Where(n => n != "NotSet")
@@ -735,6 +776,8 @@
     {
         if (_multiSelectMode && !isRemovedTab)
             ToggleRecipeCheck(recipe.Id);
+        else if (_removedMultiSelectMode && isRemovedTab)
+            ToggleRemovedCheck(recipe.Id);
         else
             await TrySelectRecipe(recipe, isRemovedTab);
     }
@@ -756,6 +799,25 @@
     {
         _multiSelectMode = false;
         _checkedRecipeIds.Clear();
+    }
+
+    private void ToggleRemovedMultiSelectMode()
+    {
+        _removedMultiSelectMode = !_removedMultiSelectMode;
+        if (!_removedMultiSelectMode)
+            _checkedRemovedIds.Clear();
+    }
+
+    private void ExitRemovedMultiSelectMode()
+    {
+        _removedMultiSelectMode = false;
+        _checkedRemovedIds.Clear();
+    }
+
+    private void ToggleRemovedCheck(string recipeId)
+    {
+        if (!_checkedRemovedIds.Remove(recipeId))
+            _checkedRemovedIds.Add(recipeId);
     }
 
     private void CloneBatch()
@@ -796,12 +858,66 @@
         }
     }
 
+    private async Task RestoreBatch()
+    {
+        if (_checkedRemovedIds.Count == 0) return;
+        var count = _checkedRemovedIds.Count;
+        var parameters = new DialogParameters
+        {
+            { "ContentText", $"Restore {count} selected recipe{(count == 1 ? "" : "s")} to their original SPT values?" },
+            { "ButtonText", "Restore" },
+            { "Color", Color.Info }
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.ExtraSmall };
+        var dialog = await DialogService.ShowAsync<ConfirmDialog>("Restore recipes", parameters, options);
+        var result = await dialog.Result;
+        if (result is { Canceled: false })
+        {
+            var ids = _checkedRemovedIds.ToList();
+            ExitRemovedMultiSelectMode();
+            foreach (var id in ids)
+                RecipeService.RestoreRecipe(id);
+            _selectedRecipe = null;
+            LoadRecipes();
+            _recipeTab = "default";
+            Snackbar.Add($"{count} recipe{(count == 1 ? "" : "s")} restored!", Severity.Success);
+        }
+    }
+
+    private async Task RestoreAllBatch()
+    {
+        var count = _removedRecipes.Count;
+        if (count == 0) return;
+        var parameters = new DialogParameters
+        {
+            { "ContentText", $"Restore all {count} removed recipe{(count == 1 ? "" : "s")} to their original SPT values?" },
+            { "ButtonText", "Restore all" },
+            { "Color", Color.Info }
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.ExtraSmall };
+        var dialog = await DialogService.ShowAsync<ConfirmDialog>("Restore all", parameters, options);
+        var result = await dialog.Result;
+        if (result is { Canceled: false })
+        {
+            var ids = _removedRecipes.Select(r => r.Id).ToList();
+            ExitRemovedMultiSelectMode();
+            foreach (var id in ids)
+                RecipeService.RestoreRecipe(id);
+            _selectedRecipe = null;
+            LoadRecipes();
+            _recipeTab = "default";
+            Snackbar.Add($"{count} recipe{(count == 1 ? "" : "s")} restored!", Severity.Success);
+        }
+    }
+
     private async Task SwitchTab(string tab)
     {
         if (!await ConfirmDiscardIfDirty()) return;
         _recipeTab = tab;
         _selectedRecipe = null;
         _selectedIsRemoved = false;
+        ExitMultiSelectMode();
+        ExitRemovedMultiSelectMode();
     }
 
     private static string IconUrl(string? templateId) =>
