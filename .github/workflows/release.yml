@@ -88,6 +88,8 @@ jobs:
             VT_SECTION=$(printf '\n\n---\n> ⚠️ VirusTotal scan timed out.')
           fi
 
+          MOD_PAGE_SECTION=$(printf '\n\n---\n### 🔗 Mod page\n[SP-Mod — HideoutCraftModifier](https://sp-mod.com/mod/2915/hideout-craft-modifier-hcm)')
+
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git config user.name "github-actions[bot]"
           git tag "$TAG"
@@ -96,6 +98,6 @@ jobs:
           RELEASE_ARGS=(release create "$TAG" \
             "bin/Release/HideoutCraftModifier.zip#HideoutCraftModifier.zip" \
             --title "$TAG" \
-            --notes "${NOTES}${VT_SECTION}")
+            --notes "${NOTES}${VT_SECTION}${MOD_PAGE_SECTION}")
           [ "${{ inputs.prerelease }}" = "true" ] && RELEASE_ARGS+=(--prerelease) || RELEASE_ARGS+=(--latest)
           gh "${RELEASE_ARGS[@]}"

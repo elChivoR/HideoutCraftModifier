@@ -2,6 +2,8 @@
 
 SPT 4.1.2 server mod that lets you manage hideout crafting recipes through a web UI integrated into SPT's built-in Blazor server.
 
+**[SP-Mod page](https://sp-mod.com/mod/2915/hideout-craft-modifier-hcm)**
+
 ## Features
 
 - **View all recipes** — filterable by station and searchable by item name, station, or ID
