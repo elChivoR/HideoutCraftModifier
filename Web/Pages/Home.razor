@@ -820,14 +820,38 @@
             _checkedRemovedIds.Add(recipeId);
     }
 
-    private void CloneBatch()
+    private async Task CloneBatch()
     {
         if (_checkedRecipeIds.Count == 0 || string.IsNullOrEmpty(_cloneTargetArea)) return;
+
+        var ids = _checkedRecipeIds.ToList();
+        var stationLabel = PrettyStation(_cloneTargetArea);
         var count = RecipeService.CloneRecipes(_checkedRecipeIds, _cloneTargetArea);
         ExitMultiSelectMode();
         LoadRecipes();
         _recipeTab = "custom";
-        Snackbar.Add($"{count} recipe{(count == 1 ? "" : "s")} cloned to {PrettyStation(_cloneTargetArea)}!", Severity.Success);
+        Snackbar.Add($"{count} recipe{(count == 1 ? "" : "s")} cloned to {stationLabel}!", Severity.Success);
+
+        var hasCustom = _recipes.Any(r => ids.Contains(r.Id) && r.IsCustom);
+        var promptText = hasCustom
+            ? $"Delete the original {ids.Count} recipe{(ids.Count == 1 ? "" : "s")}? Custom recipes cannot be restored."
+            : $"Delete the original {ids.Count} recipe{(ids.Count == 1 ? "" : "s")}? SPT originals can be recovered from the Removed tab.";
+        var parameters = new DialogParameters
+        {
+            { "ContentText", promptText },
+            { "ButtonText", "Delete originals" },
+            { "Color", Color.Warning }
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.ExtraSmall };
+        var dialog = await DialogService.ShowAsync<ConfirmDialog>("Delete originals?", parameters, options);
+        var result = await dialog.Result;
+        if (result is { Canceled: false })
+        {
+            foreach (var id in ids)
+                RecipeService.RemoveRecipe(id);
+            LoadRecipes();
+            Snackbar.Add($"{ids.Count} original{(ids.Count == 1 ? "" : "s")} deleted.", Severity.Info);
+        }
     }
 
     private async Task DeleteBatch()
