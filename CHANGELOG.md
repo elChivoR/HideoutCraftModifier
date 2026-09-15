@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v1.8.0]
+
+### Added
+- **Bulk restore:** the *Removed* tab now has a *Select* button that activates multi-select mode, letting you restore multiple deleted recipes at once with *Restore selected (N)* or restore everything in one shot with *Restore all (N)*
+- **Clone & clean up:** after a batch clone a dialog asks whether to also delete the originals, so you can keep only the clones without having to hunt down and remove each source recipe manually
+
 ## [v1.7.0]
 
 ### Added
