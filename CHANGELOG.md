@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [v1.9.0]
 
 ### Added
 - **Quest search:** Quest requirements are now picked by searching the quest name instead of pasting its ID
