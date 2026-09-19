@@ -20,6 +20,8 @@ public class RecipeViewModel
     public List<RequirementViewModel> Requirements { get; set; } = [];
     public bool IsCustom { get; set; }
     public bool IsModified { get; set; }
+    /// <summary>Why the recipe's quest unlock can't work, or null when it's fine / has no quest requirement.</summary>
+    public string? QuestUnlockProblem { get; set; }
 }
 
 public class RequirementViewModel
@@ -33,12 +35,20 @@ public class RequirementViewModel
     public int? Count { get; set; }
     public bool? IsFunctional { get; set; }
     public string? QuestId { get; set; }
+    public string? QuestName { get; set; }
     public int? Resource { get; set; }
 }
 
 public class ItemSearchResult
 {
     public string TemplateId { get; set; } = "";
+    public string Name { get; set; } = "";
+    public override string ToString() => Name;
+}
+
+public class QuestSearchResult
+{
+    public string QuestId { get; set; } = "";
     public string Name { get; set; } = "";
     public override string ToString() => Name;
 }

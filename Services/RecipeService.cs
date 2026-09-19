@@ -26,8 +26,18 @@ public class RecipeService(
     LocaleService localeService,
     ItemHelper itemHelper,
     ModHelper modHelper,
-    JsonUtil jsonUtil)
+    JsonUtil jsonUtil,
+    QuestUnlockService questUnlockService)
 {
+    /// <summary>
+    /// Shortest allowed craft time. SPT's server never runs a craft for less than 5s after
+    /// skill reductions, but the client counts down from the recipe value; below this the
+    /// client can finish (and let the player take the product) before the server does,
+    /// which duplicates the reward and kicks the player to the main menu.
+    /// Vanilla's shortest recipe is also 10s.
+    /// </summary>
+    public const double MinProductionTime = 10;
+
     private ModConfig _config = new();
     private string _modPath = "";
     // Cached to avoid calling localeService.GetLocaleDb("en") on every item name resolution,
@@ -102,6 +112,7 @@ public class RecipeService(
                 r => jsonUtil.Deserialize<HideoutProduction>(jsonUtil.Serialize(r))!)
             ?? [];
         ApplyConfig();
+        questUnlockService.Sync();
 
         // First-run (or upgrade from a version without visibleStations): seed from
         // stations that actually have at least one recipe so the bar isn't overwhelming.
@@ -195,6 +206,8 @@ public class RecipeService(
         var recipe = FindRecipe(recipeId);
         if (recipe is null) return;
 
+        if (mod.ProductionTime.HasValue) mod.ProductionTime = ClampProductionTime(mod.ProductionTime.Value);
+
         // Apply only the fields that were explicitly set (nullable pattern for partial updates)
         if (mod.ProductionTime.HasValue) recipe.ProductionTime = mod.ProductionTime.Value;
         if (mod.Count.HasValue) recipe.Count = mod.Count.Value;
@@ -228,6 +241,7 @@ public class RecipeService(
             _config.Modifications.Add(mod);
         }
 
+        questUnlockService.Sync();
         SaveConfig();
     }
 
@@ -242,24 +256,13 @@ public class RecipeService(
 
         var recipeId = new MongoId();
         addition.Id = (string)recipeId;
-        var recipe = new HideoutProduction
-        {
-            Id = recipeId,
-            AreaType = areaType,
-            ProductionTime = addition.ProductionTime,
-            EndProduct = new MongoId(addition.EndProduct),
-            Count = addition.Count,
-            Requirements = addition.Requirements.Select(ToRequirement).ToList(),
-            Locked = false,
-            Continuous = false,
-            NeedFuelForAllProductionTime = false,
-            IsEncoded = false,
-            IsCodeProduction = false
-        };
+        addition.ProductionTime = ClampProductionTime(addition.ProductionTime);
+        var recipe = BuildRecipe(addition, areaType);
 
         hideoutTable.Production.Recipes!.Add(recipe);
 
         _config.Additions.Add(addition);
+        questUnlockService.Sync();
         SaveConfig();
 
         logger.Success($"[HCM] Added recipe: {ResolveItemName(addition.EndProduct)} in {addition.AreaType}");
@@ -298,6 +301,7 @@ public class RecipeService(
         if (modification is not null)
             _config.Modifications.Remove(modification);
 
+        questUnlockService.Sync();
         SaveConfig();
         logger.Success($"[HCM] Removed recipe {recipeId}");
         return true;
@@ -414,6 +418,7 @@ public class RecipeService(
 
         if (!didSomething) return false;
 
+        questUnlockService.Sync();
         SaveConfig();
         logger.Success($"[HCM] Restored recipe {recipeId}");
         return true;
@@ -439,6 +444,22 @@ public class RecipeService(
             }
         }
 
+        // Configs saved by older versions could hold craft times below the minimum.
+        var clampedCount = 0;
+        foreach (var mod in _config.Modifications.Where(m => m.ProductionTime < MinProductionTime))
+        {
+            mod.ProductionTime = MinProductionTime;
+            clampedCount++;
+        }
+        foreach (var addition in _config.Additions.Where(a => a.ProductionTime < MinProductionTime))
+        {
+            addition.ProductionTime = MinProductionTime;
+            clampedCount++;
+        }
+        if (clampedCount > 0)
+            logger.Warning($"[HCM] Raised {clampedCount} craft time(s) to the {MinProductionTime}s minimum (shorter crafts break taking the product)");
+        var needsSave = clampedCount > 0;
+
         var modifiedCount = 0;
         foreach (var mod in _config.Modifications)
         {
@@ -459,7 +480,6 @@ public class RecipeService(
         }
 
         var addedCount = 0;
-        var needsSave = false;
         foreach (var addition in _config.Additions)
         {
             if (!Enum.TryParse<HideoutAreas>(addition.AreaType, out var areaType))
@@ -472,22 +492,7 @@ public class RecipeService(
                 addition.Id = (string)new MongoId();
                 needsSave = true;
             }
-            var recipe = new HideoutProduction
-            {
-                Id = new MongoId(addition.Id),
-                AreaType = areaType,
-                ProductionTime = addition.ProductionTime,
-                EndProduct = new MongoId(addition.EndProduct),
-                Count = addition.Count,
-                ProductionLimitCount = addition.ProductionLimitCount,
-                Requirements = addition.Requirements.Select(ToRequirement).ToList(),
-                Locked = addition.Locked,
-                Continuous = addition.Continuous,
-                NeedFuelForAllProductionTime = addition.NeedFuelForAllProductionTime,
-                IsEncoded = addition.IsEncoded,
-                IsCodeProduction = addition.IsCodeProduction
-            };
-            recipes.Add(recipe);
+            recipes.Add(BuildRecipe(addition, areaType));
             addedCount++;
         }
         if (needsSave) SaveConfig();
@@ -504,6 +509,31 @@ public class RecipeService(
         var configPath = Path.Combine(_modPath, "config.json");
         var json = jsonUtil.Serialize(_config, true);
         Task.Run(() => File.WriteAllTextAsync(configPath, json));
+    }
+
+    private static double ClampProductionTime(double seconds) => Math.Max(seconds, MinProductionTime);
+
+    /// <summary>
+    /// Builds the live recipe for a user addition. Shared by AddRecipe and ApplyConfig so a
+    /// recipe behaves the same in the session it was created as after a server restart.
+    /// </summary>
+    private HideoutProduction BuildRecipe(RecipeAddition addition, HideoutAreas areaType)
+    {
+        return new HideoutProduction
+        {
+            Id = new MongoId(addition.Id),
+            AreaType = areaType,
+            ProductionTime = addition.ProductionTime,
+            EndProduct = new MongoId(addition.EndProduct),
+            Count = addition.Count,
+            ProductionLimitCount = addition.ProductionLimitCount,
+            Requirements = addition.Requirements.Select(ToRequirement).ToList(),
+            Locked = addition.Locked,
+            Continuous = addition.Continuous,
+            NeedFuelForAllProductionTime = addition.NeedFuelForAllProductionTime,
+            IsEncoded = addition.IsEncoded,
+            IsCodeProduction = addition.IsCodeProduction
+        };
     }
 
     private HideoutProduction? FindRecipe(string recipeId)
@@ -531,6 +561,7 @@ public class RecipeService(
             IsCodeProduction = recipe.IsCodeProduction ?? false,
             IsCustom = isCustom,
             IsModified = !isCustom && IsModified(recipeId),
+            QuestUnlockProblem = questUnlockService.GetProblem(recipeId),
             Requirements = recipe.Requirements?.Select(r => new RequirementViewModel
             {
                 Type = r.Type ?? "",
@@ -541,6 +572,7 @@ public class RecipeService(
                 Count = r.Count,
                 IsFunctional = r.IsFunctional,
                 QuestId = r.QuestId,
+                QuestName = r.QuestId is not null ? questUnlockService.ResolveQuestName(r.QuestId) : null,
                 Resource = r.Resource
             }).ToList() ?? []
         };

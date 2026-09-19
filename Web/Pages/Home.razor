@@ -1,6 +1,7 @@
 @page "/hcm"
 @layout BaseMudBlazorLayout
 @inject RecipeService RecipeService
+@inject QuestUnlockService QuestUnlockService
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
 
@@ -319,10 +320,10 @@
                     <div class="hcm-section hcm-detail-col">
                         <MudText Typo="Typo.overline" Class="mud-text-secondary mb-2">PRODUCTION</MudText>
                         <div class="d-flex gap-3 align-center mb-2">
-                            <MudTooltip Text="Total crafting duration in seconds" Arrow="true" Placement="Placement.Top">
+                            <MudTooltip Text="@($"Total crafting duration in seconds (minimum {RecipeService.MinProductionTime}s)")" Arrow="true" Placement="Placement.Top">
                                 <MudNumericField @bind-Value="_editProductionTime"
                                                  Label="Time (seconds)"
-                                                 Min="0.0"
+                                                 Min="RecipeService.MinProductionTime"
                                                  Variant="Variant.Outlined"
                                                  Margin="Margin.Dense"
                                                  Style="flex:1;" />
@@ -483,10 +484,24 @@
                             }
                             else if (req.Type == "QuestComplete")
                             {
-                                <MudTextField @bind-Value="req.QuestId"
-                                              Placeholder="Quest ID"
-                                              Variant="Variant.Outlined"
-                                              Margin="Margin.Dense" />
+                                <MudAutocomplete T="QuestSearchResult"
+                                                 Placeholder="Search quest..."
+                                                 SearchFunc="@((q, _) => SearchQuests(q))"
+                                                 ToStringFunc="@(r => r?.Name ?? "")"
+                                                 Value="req.SelectedQuest"
+                                                 ValueChanged="@(r => { req.SelectedQuest = r; req.QuestId = r?.QuestId; })"
+                                                 Variant="Variant.Outlined"
+                                                 Margin="Margin.Dense"
+                                                 MinCharacters="2"
+                                                 DebounceInterval="300"
+                                                 MaxItems="15"
+                                                 ResetValueOnEmptyText="true"
+                                                 CoerceText="true"
+                                                 Dense="true" />
+                                @if (!string.IsNullOrEmpty(req.QuestId))
+                                {
+                                    <MudText Typo="Typo.caption" Class="mud-text-secondary" Style="font-size:10px;">@req.QuestId</MudText>
+                                }
                             }
                             else if (req.Type == "Resource")
                             {
@@ -527,6 +542,17 @@
                     @if (_editRequirements.Count == 0)
                     {
                         <MudText Typo="Typo.body2" Class="mud-text-secondary pa-3" Align="Align.Center">No requirements</MudText>
+                    }
+
+                    @if (_selectedRecipe.QuestUnlockProblem is not null)
+                    {
+                        <MudAlert Severity="Severity.Warning" Dense="true" Class="mt-2">@_selectedRecipe.QuestUnlockProblem</MudAlert>
+                    }
+                    else if (_selectedRecipe.Requirements.Any(r => r.Type == "QuestComplete"))
+                    {
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary mt-1" Style="display:block;">
+                            Unlocked when the quest is completed. For quests you already finished, restart the game to unlock it.
+                        </MudText>
                     }
                     </div>
 
@@ -724,6 +750,7 @@
             Count = r.Count,
             IsFunctional = r.IsFunctional ?? false,
             QuestId = r.QuestId,
+            SelectedQuest = r.QuestId is not null ? new QuestSearchResult { QuestId = r.QuestId, Name = r.QuestName ?? r.QuestId } : null,
             Resource = r.Resource
         }).ToList();
 
@@ -1047,6 +1074,12 @@
         return Task.FromResult<IEnumerable<ItemSearchResult>>(results);
     }
 
+    private Task<IEnumerable<QuestSearchResult>> SearchQuests(string query)
+    {
+        var results = QuestUnlockService.SearchQuests(query);
+        return Task.FromResult<IEnumerable<QuestSearchResult>>(results);
+    }
+
     private void AddRequirement()
     {
         _editRequirements.Add(new RequirementEntry { Type = "Item", Count = 1 });
@@ -1055,6 +1088,17 @@
     private void SaveChanges()
     {
         if (_selectedRecipe is null) return;
+
+        if (_editRequirements.Any(r => r.Type == "QuestComplete" && string.IsNullOrEmpty(r.QuestId)))
+        {
+            Snackbar.Add("Pick a quest for every Quest requirement.", Severity.Warning);
+            return;
+        }
+
+        // Quest-gated recipes must be Locked: SPT only unlocks locked recipes, and the game
+        // shows a locked recipe only once its quest reward has unlocked it.
+        var autoLocked = !_editLocked && _editRequirements.Any(r => r.Type == "QuestComplete");
+        if (autoLocked) _editLocked = true;
 
         var requirements = _editRequirements.Select(r => new RequirementConfig
         {
@@ -1090,6 +1134,8 @@
             SelectRecipe(_selectedRecipe);
 
         Snackbar.Add("Recipe updated!", Severity.Success);
+        if (autoLocked)
+            Snackbar.Add("Locked was turned on because the recipe has a quest requirement.", Severity.Info);
     }
 
     private async Task OpenAddRecipeDialog()
@@ -1177,6 +1223,7 @@
         public int? Count { get; set; } = 1;
         public bool IsFunctional { get; set; }
         public string? QuestId { get; set; }
+        public QuestSearchResult? SelectedQuest { get; set; }
         public int? Resource { get; set; }
     }
 }

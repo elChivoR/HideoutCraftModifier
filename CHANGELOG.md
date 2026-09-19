@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Added
+- **Quest search:** Quest requirements are now picked by searching the quest name instead of pasting its ID
+
+### Fixed
+- **Quest-unlocked recipes now work:** recipes with a Quest requirement get a matching craft-unlock reward on that quest, so they unlock when the quest is completed (quests already finished unlock on the next game start) and the quest's reward list shows the craft icon
+- Saving a recipe with a Quest requirement turns on *Locked* automatically, since SPT only unlocks locked recipes; a warning is shown when SPT can't tell the recipe apart from other recipes unlocked by the same quest
+- Craft time now has a 10s minimum. Very short times let the product be taken before the server finished the craft, which duplicated it and kicked the player to the main menu. Existing configs are raised to the minimum on startup
+- New and cloned recipes now keep their *Locked*, *Continuous*, *Needs fuel*, *Encoded*, *Code production* and limit settings right away instead of only after a server restart
+
 ## [v1.8.0]
 
 ### Added
