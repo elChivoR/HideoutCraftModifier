@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [v1.9.1-beta.1]
+## [v1.9.1]
 
 ### Fixed
 - **Crafted ammo boxes come out full:** a recipe whose output is an ammo pack used to hand out an empty box, because SPT creates craft rewards without their contents. The box is now filled with its cartridges, the same way SPT fills ammo boxes bought from traders or found in raid
