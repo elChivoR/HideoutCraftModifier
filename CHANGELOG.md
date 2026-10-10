@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v1.9.2]
+
+### Fixed
+- **No more "Could not find recipe" spam:** deleting a recipe that is mid-craft (e.g. a continuous craft at the Water Collector) now also clears its production from the profile. Before, SPT kept looking the missing recipe up and logged the error on every hideout update
+- *Continuous* can no longer be turned on, and cloning a recipe no longer copies it. The game only runs continuous crafts for the vanilla Water Collector and Bitcoin Farm recipes: a new continuous recipe never lets you take its product, and at the Water Collector the filter box shows nothing available. It can still be turned off on the vanilla recipes that already have it. Recipes you had saved as continuous are switched off automatically on startup (the vanilla Water Collector and Bitcoin Farm recipes keep it)
+
 ## [v1.9.1]
 
 ### Fixed

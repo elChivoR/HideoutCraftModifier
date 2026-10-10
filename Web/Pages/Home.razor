@@ -357,8 +357,8 @@
                             <MudTooltip Text="Recipe is locked by default and must be unlocked (usually via quest completion)" Arrow="true" Placement="Placement.Top">
                                 <MudSwitch T="bool" @bind-Value="_editLocked" Label="Locked" Color="Color.Warning" />
                             </MudTooltip>
-                            <MudTooltip Text="Production repeats automatically after completion" Arrow="true" Placement="Placement.Top">
-                                <MudSwitch T="bool" @bind-Value="_editContinuous" Label="Continuous" Color="Color.Warning" />
+                            <MudTooltip Text="@(_selectedRecipe?.Continuous == true ? "Only vanilla Water Collector / Bitcoin Farm crafts are continuous. It can be turned off here, but not back on" : "Can't be turned on: the game only supports continuous crafts on the vanilla Water Collector and Bitcoin Farm recipes, new ones never deliver their product")" Arrow="true" Placement="Placement.Top">
+                                <MudSwitch T="bool" @bind-Value="_editContinuous" Label="Continuous" Color="Color.Warning" Disabled="@(_selectedRecipe?.Continuous != true)" />
                             </MudTooltip>
                             <MudTooltip Text="Generator must have fuel running for the entire production duration" Arrow="true" Placement="Placement.Top">
                                 <MudSwitch T="bool" @bind-Value="_editNeedFuel" Label="Needs fuel" Color="Color.Warning" />

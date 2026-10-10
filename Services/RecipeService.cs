@@ -8,6 +8,7 @@ using SPTarkov.Server.Core.Models.Common;
 using SPTarkov.Server.Core.Models.Eft.Hideout;
 using SPTarkov.Server.Core.Models.Enums.Hideout;
 using SPTarkov.Server.Core.Models.Spt.Tables;
+using SPTarkov.Server.Core.Servers;
 using SPTarkov.Server.Core.Services.Locales;
 using SPTarkov.Server.Core.Utils;
 
@@ -27,7 +28,8 @@ public class RecipeService(
     ItemHelper itemHelper,
     ModHelper modHelper,
     JsonUtil jsonUtil,
-    QuestUnlockService questUnlockService)
+    QuestUnlockService questUnlockService,
+    SaveServer saveServer)
 {
     /// <summary>
     /// Shortest allowed craft time. SPT's server never runs a craft for less than 5s after
@@ -301,10 +303,28 @@ public class RecipeService(
         if (modification is not null)
             _config.Modifications.Remove(modification);
 
+        PurgeProductions([recipeId]);
         questUnlockService.Sync();
         SaveConfig();
         logger.Success($"[HCM] Removed recipe {recipeId}");
         return true;
+    }
+
+    /// <summary>
+    /// Drops profile productions that point at recipes that no longer exist. SPT looks every
+    /// profile production up in the recipe table on each hideout tick and logs
+    /// "Could not find recipe ... for area type" forever if it is missing (e.g. an active
+    /// continuous craft such as the Water Collector filter whose recipe was deleted).
+    /// </summary>
+    private void PurgeProductions(IEnumerable<string> recipeIds)
+    {
+        var ids = recipeIds.Select(id => new MongoId(id)).ToList();
+        foreach (var profile in saveServer.GetProfiles().Values)
+        {
+            var production = profile.CharacterData?.PmcData?.Hideout?.Production;
+            if (production is null) continue;
+            foreach (var id in ids) production.Remove(id);
+        }
     }
 
     public bool IsModified(string recipeId) =>
@@ -329,7 +349,7 @@ public class RecipeService(
                 Count = vm.Count,
                 ProductionLimitCount = vm.ProductionLimitCount,
                 Locked = vm.Locked,
-                Continuous = vm.Continuous,
+                Continuous = false, // continuous crafts only work on the two vanilla recipes
                 NeedFuelForAllProductionTime = vm.NeedFuelForAllProductionTime,
                 IsEncoded = vm.IsEncoded,
                 IsCodeProduction = vm.IsCodeProduction,
@@ -458,7 +478,23 @@ public class RecipeService(
         }
         if (clampedCount > 0)
             logger.Warning($"[HCM] Raised {clampedCount} craft time(s) to the {MinProductionTime}s minimum (shorter crafts break taking the product)");
-        var needsSave = clampedCount > 0;
+        // Continuous crafts only work on the vanilla recipes that are already continuous
+        // (water collector, bitcoin farm); on any other recipe the product can never be taken.
+        var continuousFixed = 0;
+        foreach (var mod in _config.Modifications.Where(m => m.Continuous == true
+                     && !(_originalRecipes.TryGetValue(m.RecipeId, out var orig) && orig.Continuous == true)))
+        {
+            mod.Continuous = null;
+            continuousFixed++;
+        }
+        foreach (var addition in _config.Additions.Where(a => a.Continuous))
+        {
+            addition.Continuous = false;
+            continuousFixed++;
+        }
+        if (continuousFixed > 0)
+            logger.Warning($"[HCM] Turned off Continuous on {continuousFixed} recipe(s): it only works on the vanilla Water Collector and Bitcoin Farm recipes");
+        var needsSave = clampedCount > 0 || continuousFixed > 0;
 
         var modifiedCount = 0;
         foreach (var mod in _config.Modifications)
